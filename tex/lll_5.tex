@@ -85,11 +85,57 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 首先从游戏规则考虑，游戏获胜的条件和速度方向以及双方的位置信息有关，所以特征平面需要涵盖相关信息，在这里选择5层的10*10的特征空间表示状态信息，第一层为我方当前的位置，第二层为我方上一步的位置，第三层为敌方当前位置，第四层为敌方上一步位置，第五层用来表示我方是红方还是蓝方，红方为全0，蓝方为全1。在动作选择上，由于移动的位置只能是相连的上下左右四个方向，所以动作空间为4个离散的值，0代表向上移动，1代表向下移动，2代表左，3代表右，返回的奖励函数为获胜一方的奖励为1，失败一方奖励为-1。由于小鱼走过的位置还可以重复走，所以这里设置为当两方各自走过的步数超过200步还没有分出胜负，判定为平局，奖励为0。
 当每进行一次动作选择，对当前状态进行400次蒙特卡洛树搜索统计搜索结果。根据每个节点的访问次数利用式\ref{eq:gailu}和\ref{eq:zaosheng}进行节点信息统计得到当前状态的动作这里面选取温度常数$\tau=1$,噪声系数$\varepsilon=0.25$。在每一次蒙特卡洛树的搜索和建立中，对于当前位置可选的动作有上下左右，当智能体在围墙边界时，会把不能移动的动作去掉，根据可行动作进行树的节点扩展。对于当前智能体的子节点扩展就是对方可行的动作。在动作选择时，选取最大的$Q+U$进行动作的选择，这里$Q$代表经过当前节点获得的平均奖励，$U$为根据深度学习网络得到的先验概率。
 
-在神经网络参数的选择上面，利用CNN进行特征的提取，网络结构如下：
+
 
 \section{多对多智能体场景设计}
+
+\subsection{问题描述}
+本节在上一节的基础上，由一对一智能体之间的相互博弈拓展到多对多智能体的相互博弈。被吃掉的规则和上一节相同。这里红方蓝方各有两个小鱼，分别在左下角和右上角，给两方小鱼一个初始速度和位置，游戏规则如下：四个小鱼轮流进行移动，移动的范围是上下左右，当下一动作撞到墙壁或本方队友时，认为该动作是非法的。红色和粉色的小鱼为一队，浅蓝色和深蓝色小鱼为一队，行动的顺序为红，深蓝，粉，浅蓝。四个小鱼初始位置如图\ref{小鱼初始位置}。
+
+\begin{figure}[!htbp]
+	\centering
+	\includegraphics[width=\hsize]{example/xiaoyuchushiweizhi.jpg}
+	\bicaption[这里将出现在插图索引]
+	{小鱼初始位置示意图}
+	{The Diagrammatic Drawing of Minmax Search Tree}
+	\label{小鱼初始位置}
+\end{figure}
+
+给红色小鱼初始位置为(1,2)初速度为向上，粉色小鱼初始位置为$(2,2)$初速度为向上，深蓝色小鱼初始位置为(7,7),浅蓝色小鱼初始位置为$(8,7)$,初速度都为向下。游戏结束的规则为当有任意一条小鱼被吃掉，该方判为输家。因此整个游戏的流程为：
+
+\begin{algorithm}[!htbp]
+	\caption{多对多游戏流程}% Ëã·¨±êÌâ
+	\begin{algorithmic}[1]%Ò»ÐÐÒ»¸ö±êÐÐºÅ
+		\For{每个智能体移动的次数不超过移动步数上限 }
+		\State 红色小鱼根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断红色小鱼和对方两条小鱼的状态关系
+		\If {任意一条小鱼被吃掉}
+		\State 游戏结束，跳出循环,返回结果
+		\EndIf
+		\State 蓝色小鱼根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断蓝色小鱼和对方两条小鱼的状态关系
+		\If {任意一条小鱼被吃掉}
+		\State 游戏结束，跳出循环,返回结果
+		\EndIf
+		\State 粉色小鱼根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断粉色小鱼和对方两条小鱼的状态关系
+		\If {任意一条小鱼被吃掉}
+		\State 游戏结束，跳出循环,返回结果
+		\EndIf
+		\State 浅蓝色小鱼根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断浅蓝色小鱼和对方两条小鱼的状态关系
+		\If {任意一条小鱼被吃掉}
+		\State 游戏结束，跳出循环,返回结果
+		\EndIf
+		
+		\EndFor
+	\end{algorithmic}
+\end{algorithm}
+\subsection{场景建模}
+在多对多场景中，相当于每个智能体不仅需要感知当前状态，还需要感知本方智能体和敌方智能体所有的动作信息。智能体的动作可以通过上一步的位置和当先位置得到，所以在本实验中状态设置为10*10*9。与上一节一样，10*10代表棋盘大小，第一层是红色小鱼当前位置，第二层为红色小鱼上一步位置，第三层第四层依次表示粉色小鱼信息，第五，六层为蓝色小鱼信息，第七，八层为浅蓝色小鱼信息，第九层带表当前训练的是哪个智能体。
 由于设计的状态包含了当前环境状态和其他智能体的动作信息，在利用深度学习网络拟合值函数和策略函数时，特征提取部分的网络结构可以共享，深度学习网络结构如下图所示：
-\begin{figure}[!htp]
+
+\begin{figure}[!htpb]
 	\centering
 	\includegraphics[width=10cm]{example/wangluojiegoutu.jpg}
 	\bicaption[这里将出现在插图索引]
@@ -97,8 +143,9 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	{Neural network training pipeline}
 	\label{fig:wangluojiegoutu}
 \end{figure}
-算法流程图：
-\begin{algorithm}[!hbp]
+
+多对多强化学习博弈算法流程图为：
+\begin{algorithm}[!htbp]
 	\caption{多对多强化学习博弈算法}% Ëã·¨±êÌâ
 	\begin{algorithmic}[1]%Ò»ÐÐÒ»¸ö±êÐÐºÅ
 		\Require
@@ -108,8 +155,8 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 		\For{每一次迭代$iteration=1$ to $T$ }
 		 \If{达到下列之一终止条件：
 		 \begin{enumerate}
-		     	\item 所有智能体都没有可选动作
-		     	\item 达到了游戏最大的行动数还没分出胜负
+		     	 \item 所有智能体都没有可选动作
+		     	 \item 达到了游戏最大的行动数还没分出胜负
 	     \end{enumerate}}
 		\State 跳出当前循环
 		\Else
@@ -121,14 +168,20 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 		\While{$MCTS$搜索次数小于$n_playout$}
 		\State 进行树节点的选择：每次模拟通过选择最大上限置信度$Q(s,a)+U(s,a)$进行树的遍历。这里${\rm{U}}(s,a) \propto P(s,a)/(1 + N(s,a))$
 		\State 叶节点的扩展和状态值评估：
-		\\
 		利用神经网络计算结果进行叶节点展开和对应状态值的评估。$(P(s, \cdot ),V(s)) = {f_{{\theta _i}}}(s)$,$p$值的向量存储在从$s$输出的边中。
 		\State 回溯：
-		\\当进行树的模拟遍历时，被访问的边会进行相应的节点访问次数更新，$Q(s,a) = 1/N(s,a)\sum\nolimits_{s'|s,a \to s'} {V(s')} $,这里${s'|s,a \to s'}$代表在状态$s$采取动作$a$后到达状态$s'$。
+		当进行树的模拟遍历时，被访问的边会进行相应的节点访问次数更新，$Q(s,a) = 1/N(s,a)\sum\nolimits_{s'|s,a \to s'} {V(s')} $,这里${s'|s,a \to s'}$代表在状态$s$采取动作$a$后到达状态$s'$。
 		\EndWhile
 		\State 动作选择：
 		\\当搜索结束后，根据搜索的结果根据式\ref{eq:gailu}结合温度参数统计每个动作被访问的概率。根据得到的结果选择一个动作进行到下一状态$s_t+1$的转移。
 		\EndFor
+		  \algstore{MergeSort}
+		\end{algorithmic}
+		\end{algorithm}
+
+		\begin{algorithm}[!htbp]
+		\begin{algorithmic}[1]
+		\algrestore{MergeSort}
 		\State 记录当前幕中经过的所有的状态和最后游戏的结果${r_T} \in \{  - 1, + 1\} $
 		\For{在得到最后的获胜结果后，对于之前走过的每一步}
 		\State 从当前玩家角度更新最后游戏的得分${z_t} \leftarrow  \pm {r_T}$，结合之前保存的每一步状态，存储数据的格式为$s_t,\pi_t,z_t$
@@ -154,11 +207,80 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 
 从上述算法可以看出，$MCTS$可以看作是一个策略改进的实现，$MCTS$在深度学习输出的先验概率${f_{{\theta _{i - 1}}}}$基础上搜索策略${\pi _t} = {\alpha _{{\theta _{i - 1}}}}({s_t})$。树的边建立了一系列状态动作对$(s,a)$，记录了先验概率$P(s,a)$,节点访问次数$N(s,a)$和状态动作值$Q(s,a)$。$self-play$的过程可以看作策略迭代网络的标签数据，在每一次自我博弈中，选择获胜玩家的数据进行一个正样本。训练深度学习网络权重${\theta _i}$,价值网络损失函数为回归常用的均方误差${(z - v)^2}$，策略网络为交叉熵$ - {\pi ^T}\log p$。这里同时训练两个网络所以将两项目标函数进行加和，利用梯度下降法进行网络参数的更新。
 
+\section{实验结果与分析}
 
-\section{实验设计与实验结果}
-this is a test
 \subsection{一对一实验结果}
 \subsection{多对多实验结果}
+在多对多实验中，参数设置如下：
+\begin{table}
+	\centering
+	\caption{多对多实验参数信息}
+	\begin{tabular}{c|c}
+		\hline 
+		棋盘大小 & 10*10 \\ 
+		\hline 
+		自适应学习率参数$\lambda$ & 1.5 \\ 
+		\hline 
+		温度探索参数$\tau$& 1.0 \\ 
+		\hline 
+		每次落子蒙特卡洛搜索次数 & 500 \\ 
+		\hline 
+		贪心策略$\epsilon$ & 0.75 \\ 
+		\hline 
+		起始学习率 & 2e-3
+	\end{tabular} 
+\end{table}
+奖励设置为当双方各走完200步没有分出胜负，各奖励0，当一方至少有一条小鱼被吃掉，获胜方奖励为1，失败方奖励为-1。为了加快收敛速度，人为定义规则，当双方距离小于7时，只能向相互靠近的方向移动，对比加入规则前后得到的交叉熵和损失函数曲线为：
+\begin{figure}[!bpt]
+	\centering
+	\subcaptionbox{规则对交叉熵的影响\label{fig1:guize:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduoentropy.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{规则对损失函数的影响\label{fig1:guize:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduoloss.jpg}}
+	\bicaption
+	{是否引入先验规则效果对比}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig1:guize}
+\end{figure}
+从\ref{fig1:guize:a}可以看出在训练初期加入规则之前交叉熵下降相对缓慢，加入规则之后在训练初期交叉熵下降较快，但是在后期交叉熵稳定在0.45左右，而不加规则的模型交叉熵还在持续下降。从\ref{fig1:guize:b}可以看出加入规则的模型损失函数相对容易学习，因为加入规则后人为干预了数据样本的多样性，所以网络更容易学习，但是同时失去了模型的泛化能力。利用加入规则的模型和没有加规则的模型分别在训练的前中后期进行50轮对弈。得到的对弈的结果如下：
+\begin{figure}[!htp]
+	\centering
+	\includegraphics[width=10cm]{example/win.jpg}
+	\bicaption[这里将出现在插图索引]
+	{对弈统计结果}
+	{Neural network training pipeline}
+	\label{fig:win}
+\end{figure}
+
+
+人机对战结果展示如下：
+在这里人类控制的红色小鱼先向上走一步，到达位置$(1,4)$计算红色小鱼对蓝色鱼和深蓝色鱼的位置信息，都没有被吃掉。轮到模型控制的深蓝色鱼进行动作，蓝色小鱼可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如下:
+\begin{figure}[!htp]
+	\centering
+	\includegraphics[width=10cm]{example/duoduiduo2.jpg}
+	\bicaption[这里将出现在插图索引]
+	{蓝方起始状态信息}
+	{Neural network training pipeline}
+	\label{duoduiduo2.png}
+\end{figure}
+模型在test过程用贪心策略，选择概率最大的动作向左走，然后人类控制粉色小鱼向右，通过搜索算法统计得到浅蓝色小鱼的策略如图:
+\begin{figure}[!htp]
+	\centering
+	\includegraphics[width=6cm]{example/duoduiduo3.jpg}
+	\hspace{0.5cm}
+	\includegraphics[width=6cm]{example/duoduiduo4.jpg}
+	\hspace{0.5cm}
+	\includegraphics[width=6cm]{example/duoduiduo5.jpg}
+	\hspace{0.5cm}
+	\includegraphics[width=6cm]{example/duoduiduo6.jpg}
+	\bicaption[这里将出现在插图索引中]
+	{人机对弈过程图示}
+	{English caption}
+	\label{fig:AIvsHuman2}
+\end{figure}
+经过以上的对战到达状态如图\ref{AIvsHuman2},可以看出这时对于深蓝色小鱼的策略已经非常明确，模型以0.8375的概率让深蓝色小鱼向左移动。下面分析当深蓝色小鱼分别执行可行的左，下，右的情况。
+
 \section{本章小结}
 
 
