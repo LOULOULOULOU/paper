@@ -210,6 +210,95 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 \section{实验结果与分析}
 
 \subsection{一对一实验结果}
+在一对一实验中，给红蓝两方一个初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{yiduiyi1.jpg}：
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=10cm]{example/yiduiyi1.jpg}
+	\bicaption[这里将出现在插图索引]
+	{红蓝两方初始状态}
+	{Neural network training pipeline}
+	\label{yiduiyi1.jpg}
+\end{figure}
+红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{yiduiyi2.jpg}
+
+
+\begin{figure}[!hbtp]
+	\centering
+	\includegraphics[width=10cm]{example/yiduiyi2.jpg}
+	\bicaption[这里将出现在插图索引]
+	{红蓝两方初始状态}
+	{Neural network training pipeline}
+	\label{yiduiyi2.jpg}
+\end{figure}
+
+接着蓝方取动作概率中的最大值进行动作，人机对弈的结果如下：
+\begin{figure}[!htp]
+	\centering
+	\subcaptionbox{温度常数对交叉熵的影响\label{fig2:yiduiyi3-6:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi3.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{温度常数对损失函数的影响\label{fig2:yiduiyi3-6:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi4.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{温度常数对相对熵的影响\label{fig2:yiduiyi3-6:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi5.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{温度常数对获胜率的影响\label{fig2:yiduiyi3-6:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi6.jpg}}
+	\bicaption
+	{人机对弈过程图示}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2:yiduiyi3-6}
+\end{figure}
+
+对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，看其和红方的相对状态：
+\begin{figure}[!htp]
+	\centering
+	\subcaptionbox{向上双方状态\label{fig2:yiduiyi7-10:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi7.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向下双方状态\label{fig2:yiduiyi7-10:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi8.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{向左双方状态\label{fig2:yiduiyi7-10:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi9.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向右双方状态\label{fig2:yiduiyi7-10:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi10.jpg}}
+	\bicaption
+	{人机对弈过程图示}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2:yiduiyi7-10}
+\end{figure}
+可以看出当蓝方向下走时，会被红方吃掉，对模型搜索得到的概率为0.0375。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析：
+
+\begin{figure}[!htpb]
+	\centering
+	\subcaptionbox{向上双方状态\label{fig2:yiduiyi11-14:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi11.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向下双方状态\label{fig2:yiduiyi11-14:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi12.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{向左双方状态\label{fig2:yiduiyi11-14:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi13.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向右双方状态\label{fig2:yiduiyi11-14:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi14.jpg}}
+	\bicaption
+	{人机对弈过程图示}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2:yiduiyi11-14}
+\end{figure}
+可见当蓝方向下时会把红方吃掉，对照模型搜索得到的概率，向下的概率最大，为0.755。
+
+从一对一结果分析可以看出训练后的模型已经能识别出在那种状态应该远离敌方，并在合适的位置进行攻击。
+
+
+
 \subsection{多对多实验结果}
 在多对多实验中，参数设置如下：
 \begin{table}
@@ -244,7 +333,7 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\label{fig1:guize}
 \end{figure}
 从\ref{fig1:guize:a}可以看出在训练初期加入规则之前交叉熵下降相对缓慢，加入规则之后在训练初期交叉熵下降较快，但是在后期交叉熵稳定在0.45左右，而不加规则的模型交叉熵还在持续下降。从\ref{fig1:guize:b}可以看出加入规则的模型损失函数相对容易学习，因为加入规则后人为干预了数据样本的多样性，所以网络更容易学习，但是同时失去了模型的泛化能力。利用加入规则的模型和没有加规则的模型分别在训练的前中后期进行50轮对弈。得到的对弈的结果如下：
-\begin{figure}[!htp]
+\begin{figure}[!hbtp]
 	\centering
 	\includegraphics[width=10cm]{example/win.jpg}
 	\bicaption[这里将出现在插图索引]
@@ -265,22 +354,57 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\label{duoduiduo2.png}
 \end{figure}
 模型在test过程用贪心策略，选择概率最大的动作向左走，然后人类控制粉色小鱼向右，通过搜索算法统计得到浅蓝色小鱼的策略如图:
+
 \begin{figure}[!htp]
 	\centering
-	\includegraphics[width=6cm]{example/duoduiduo3.jpg}
-	\hspace{0.5cm}
-	\includegraphics[width=6cm]{example/duoduiduo4.jpg}
-	\hspace{0.5cm}
-	\includegraphics[width=6cm]{example/duoduiduo5.jpg}
-	\hspace{0.5cm}
-	\includegraphics[width=6cm]{example/duoduiduo6.jpg}
-	\bicaption[这里将出现在插图索引中]
+	\subcaptionbox{温度常数对交叉熵的影响\label{fig2:fig:duoduiduo3-6:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo3.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{温度常数对损失函数的影响\label{fig:duoduiduo3-6:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo4.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{温度常数对相对熵的影响\label{fig:duoduiduo3-6:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo5.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{温度常数对获胜率的影响\label{fig:duoduiduo3-6:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo6.jpg}}
+	\bicaption
 	{人机对弈过程图示}
-	{English caption}
-	\label{fig:AIvsHuman2}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig:duoduiduo3-6}
 \end{figure}
-经过以上的对战到达状态如图\ref{AIvsHuman2},可以看出这时对于深蓝色小鱼的策略已经非常明确，模型以0.8375的概率让深蓝色小鱼向左移动。下面分析当深蓝色小鱼分别执行可行的左，下，右的情况。
 
+经过以上的对战到达状态如图\ref{fig:duoduiduo3-6:d},可以看出这时对于深蓝色小鱼的策略已经非常明确，模型以0.8375的概率让深蓝色小鱼向左移动。下面分析当深蓝色小鱼分别执行可行的左，下，右的情况。
+当小鱼向下移动时，和对方智能体相对状态如图\ref{fig:duoduiduo9.jpg}
+
+
+\begin{figure}[!hpbt]
+	\centering
+	\subcaptionbox{温度常数对交叉熵的影响\label{fig2:duoduiduo:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo7.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{温度常数对损失函数的影响\label{fig2:duoduiduo:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo8.jpg}}
+	\bicaption
+	{温度常数对不同参数的影响}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2:duoduiduo}
+\end{figure}
+经过计算蓝色小鱼向下移动和向右移动后与对方两个智能体相对状态，可以看出当向下和向右移动并不会吃掉对方小鱼，而当执行按照\ref{fig:duoduiduo3-6:d}策略，选取最大概率的动作向左时状态如图\ref{fig3:duoduiduo}
+\begin{figure}[!hpbt]
+	\centering
+	\subcaptionbox{温度常数对交叉熵的影响\label{fig3:duoduiduo:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo9.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{温度常数对损失函数的影响\label{fig3:duoduiduo:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo10.jpg}}
+	\bicaption
+	{温度常数对不同参数的影响}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig3:duoduiduo}
+\end{figure}
+可以看到最后粉色小鱼被吃掉，训练出来的模型具有一定的决策能力。在训练时需要合理平衡探索和利用的关系，在模型进行人机对抗时，采用贪婪策略选取概率最大的动作。利用从零开始学习模型的方案要比加入先验规则表现好，在模型前期可能会出现波动，但是在后期模型性能增长要比加入规则模型快。这也和由AlphaGo进化到AlphaZero得到的结果一致：在很多情况下利用人类专家数据学习的模型并不一定是最优的，让模型从白板开始训练，通过自我对弈进行能获得比人类认知更好的策略。
 \section{本章小结}
 
 
