@@ -51,7 +51,7 @@
 	\bicaption[这里将出现在插图索引]
 	{搜索树搜索示意图}
 	{The Diagrammatic Drawing of Minmax Search Tree}
-	\label{搜索树搜索示意图}
+	\label{fig:treesearch}
 \end{figure}
 \begin{enumerate}
 	\item 选择(Selection):对于已经建立好的搜索树从根节点向下扩展到子节点选择路径的方案。
@@ -149,9 +149,9 @@ l = {(z - v)^2} - {\pi ^T}\log p + c{\rm{||}}\theta {\rm{|}}{{\rm{|}}^2}
 	{Neural network training pipeline}
 	\label{fig:ACgaijin}
 \end{figure}
-可见数据流的流向是先由蒙特卡洛树搜索得到相应的动作概率以及得分数据，然后把数据传向深度学习网络。由于自对抗生成式数据生成过程比较缓慢，提高样本利用率，有效平衡探索和利用的关系对于模型的效果有重要的作用。本节提出了两点改进，一是在神经网络学习阶段用自适应学习率的方法适应数据前期不稳定，后期接近标签奖励明确的特点，二是在统计蒙特卡洛搜索树信息中引入温度常数和噪声系数，促进前期探索后期利用的学习过程。
+可见数据流的流向是先由蒙特卡洛树搜索得到相应的动作概率以及得分数据，然后把数据传向深度学习网络。由于自对抗生成式数据生成过程比较缓慢，提高样本利用率，有效平衡探索和利用的关系对于模型的效果有重要的作用。本节提出了两点改进，一是在神经网络学习阶段用自适应学习率的方法适应数据前期不稳定，后期接近标签奖励明确的特点，二是在强化学习框架中平衡探索和利用关系时，同时引入$\epsilon$贪心算法和$softmax$算法，促进前期探索后期利用的学习过程。
 \subsection{基于交叉熵信息的自适应学习率}
-在原来的Alphazero论文算法中，学习率的算法是根据迭代次数进行调整，寻求最优解的方式为异步随机梯度下降法，初始化的学习率为$\alpha$,当迭代次数为$T$时递减一半，为$2T$时再次递减，直到寻得最优解，这样学习率$\alpha$以及时间$T$都需要人为进行选取，当参数选取不合适很容易导致梯度不稳定过拟合或欠拟合现象的出现。而且迭代次是并不一定能直接反应出网络梯度更新效果的好坏，调参负担重导致结果容易出现崩溃的现象。这里我们选取能够直接反应网络更新前后变化量大小及效果的距离度量--相对熵作为衡量是否需要调整步长的指标。相对熵的定义如下：
+在原来的Alphazero论文算法中，学习率的算法是根据迭代次数进行调整，寻求最优解的方式为异步随机梯度下降法，初始化的学习率为$\alpha$,当迭代次数为$T$时递减一半，为$2T$时再次递减，直到寻得最优解，这样学习率$\alpha$以及时间$T$都需要人为进行选取，当参数选取不合适很容易导致梯度不稳定过拟合或欠拟合现象的出现。而且迭代次数并不一定能直接反应出网络梯度更新效果的好坏，调参负担重导致结果容易出现崩溃的现象。这里我们选取能够直接反应网络更新前后变化量大小及效果的距离度量——相对熵作为衡量是否需要调整步长的指标。相对熵的定义如下：
 \begin{equation}
 {\rm{D}}(P{\rm{||Q}}){\rm{ = }}\sum\limits_{x \in X} {p(x)\log \frac{{P(x)}}{{Q(x)}}} 
 \end{equation}
@@ -162,7 +162,7 @@ l = {(z - v)^2} - {\pi ^T}\log p + c{\rm{||}}\theta {\rm{|}}{{\rm{|}}^2}
 dist =  - \sum\limits_{i = 1}^{|A|} {{p_{\bar \theta }}(s)(\log ({p_\theta }(s)) - \log ({p_{\bar \theta }}(s))} )
 \end{equation}
 
-这里,$p_{\bar \theta}$代表状态更新前的网络参数，$p_\theta $代表状态更新后的网络参数，式\ref{eq:dist}代表了网络更新前后的变化程度相对于原来网络的变化程度。因此可以根据这个变化程度自适应调整学习率:
+这里, $p_{\bar \theta}$代表状态更新前的网络参数，$p_\theta $代表状态更新后的网络参数，式\ref{eq:dist}代表了网络更新前后的变化程度相对于原来网络的变化程度。因此可以根据这个变化程度自适应调整学习率:
 \begin{equation}
 \label{eq:r}
 r = \left\{ {\begin{array}{*{20}{c}}
@@ -173,12 +173,12 @@ r = \left\{ {\begin{array}{*{20}{c}}
 \end{equation}
 其中，$\lambda$代表每次更新学习率放缩的比例，$threshold\_up$和$threshold\_down$分别代表了上限阈值和下限阈值。
 \subsection{引导式对弈探索}
-为了进一步解决强化学习探索和利用的平衡问题，式\ref{eq:fenbu}已经介绍了经过蒙特卡洛搜索树搜索后统计的状态动作概率值，考虑到动作选择的概率很大程度依靠于蒙特卡洛树多次模拟得到的统计结果，在网络训练初期，很多时候蒙特卡洛的动作选择是随机性的，对神经网络的拟合借鉴性不大，而在网络后期，越接近奖励的步骤目标越明确，这时候可以增大对应的借鉴比例。这里引入温度常量$\tau $,动作概率公式变为：
+为了进一步解决强化学习探索和利用的平衡问题，式\ref{eq:fenbu}已经介绍了经过蒙特卡洛搜索树搜索后统计的状态动作概率值，考虑到动作选择的概率很大程度依靠于蒙特卡洛树多次模拟得到的统计结果，在网络训练初期，很多时候蒙特卡洛的动作选择是随机性的，对神经网络的拟合借鉴性不大，而在网络后期，越接近奖励的步骤目标越明确，这时候可以增大对应的借鉴比例。根据$Boltzmann$分布引入温度常量$\tau $,动作概率公式变为：
 \begin{equation}
 \label{eq:gailu}
 {\pi _t}(a|{s_t}) = \frac{{{e^{N{{({s_t},a)}^{1/\tau }}}}}}{{{e^{\sum\nolimits_b {N{{({s_t},b)}^{^{1/\tau }}}} }}}}
 \end{equation}
-在这里${N({s_t},a)}$是在状态$s_t$时选择动作$a$的次数，${\sum\nolimits_b {N{{({s_t},b)}^{1/\tau }}} }$是在状态$s_t$时，选择所有动作的总次数，这里面温度常数$\tau>0$,是控制探索和利用平衡的指标，$\tau$越小，代表动作策略更倾向于选择访问次数多的动作,当$\tau$趋近于零时函数趋近于仅利用，$\tau$越大，动作概率趋近于选择更多未探索到的策略，$\tau$趋近于正无穷，策略趋近于仅探索。这里可以在开局把$\tau$设为一个较大的初值，鼓励智能体探索不同情况的动作，在训练的后期，令$\tau  \to 0$，当训练策略稳定后，智能体将选择访问次数较多的动作。
+在这里${N({s_t},a)}$是在状态$s_t$时选择动作$a$的次数，${\sum\nolimits_b {N{{({s_t},b)}^{1/\tau }}} }$是在状态$s_t$时，选择所有动作的总次数，这里面温度常数$1>\tau>0$,是控制探索和利用平衡的指标，$\tau$越小，代表动作策略更倾向于选择访问次数多的动作,当$\tau$趋近于零时函数趋近于仅利用，$\tau$越大，动作概率趋近于选择更多未探索到的策略，$\tau$趋近于正无穷，策略趋近于仅探索。这里可以在开局把$\tau$设为1，鼓励智能体探索不同情况的动作，在训练的后期，令$\tau  \to 0$，当训练策略稳定后，智能体将选择访问次数较多的动作。
 这里为了进一步增加探索的几率，对动作概率引入随机噪声：
 \begin{equation}
 \label{eq:zaosheng}
@@ -193,7 +193,7 @@ r = \left\{ {\begin{array}{*{20}{c}}
 		初始学习率$r_0$,上限阈值$threshold\_up$和下限阈值$threshold\_down$，调整率$\lambda$,网络初始参数$\theta_0$，以及温度常数$\tau$和狄利克雷常数$c$,平衡系数$\varepsilon $。
 		\While {没有达到网络优化停止准则}
 		\State 从经验池中采样m个样本${\rm{\{ }}{{\rm{x}}^{(1)}}{\rm{,}}{{\rm{x}}^{(2)}}{\rm{,}}...{\rm{,}}{{\rm{x}}^{(m)}}{\rm{\} }}$
-		\State 根据式\ref{eq：gailu}统计在$t$时刻状态$s_t$下选择不同动作的概率。
+		\State 根据式\ref{eq:gailu}统计在$t$时刻状态$s_t$下选择不同动作的概率。
 		\State 根据\ref{eq:zaosheng}更新概率值。
 		\State 当利用神经网络进行概率值拟合时，根据式\ref{eq:dist}计算网络参数更新前后相对变化量。
 		\State 然后利用式\ref{eq:r}更新学习率。进行下一轮蒙特卡洛树的更新和神经网络参数的更新
@@ -204,67 +204,65 @@ r = \left\{ {\begin{array}{*{20}{c}}
 在本章，主要针对上一节提出的两点改进算法进行模型参数性能的分析，根据分析曲线和具体的应用场景进行参数的选择。由于研究的是博弈式游戏策略，因此以五子棋为实验背景进行多组对比实验。
 
 \subsection{数据及场景介绍}
-五子棋是大家耳熟能详的简单棋类游戏，其游戏规则比较简单，在一个$n\cdot n$的棋盘里，黑手和白手交替进行一次落子，可落子的空间为全盘，所以在搜索树的每一层节点都有n*n种可能性。当玩家首先在棋盘中在横向纵向以及对角上连成连续的五个棋子即判定为获胜。
-抽象成强化学习模型，为了表示黑白双方的位置信息，这里用4层的8*8的棋盘表示落子信息。第一层为当前玩家全部落子位置，有子的位置为1，没有子的位置为0，同样的，第二层表示对方玩家全部落子位置，第三层为对手最后一步落子的位置，在这一层特征中只有一个位置为1，剩下位置都为0。由于是极小极大化的过程所欲需要最后一层平面表示当前玩家是黑方还是白方，黑方为全1的矩阵，白方为全0的矩阵。在动作方式的建立上，由于棋盘可落子范围为全盘，所以初始化动作为8*8的概率矩阵，当某一位置以落子，将该位置从动作池中抽掉。由于五子棋是有严格胜负规则的游戏，所以奖励可以根据游戏的胜负规则来确定：如果进行到游戏的最后如果当前玩家获胜，奖励为+1，对手奖励为-1，反之如果当前玩家失败，奖励为-1，对手为+1，如果棋盘全满，双方无子可落，双方平局，奖励全部为0。
+五子棋是大家耳熟能详的简单棋类游戏，其游戏规则比较简单，在一个$n \times n$的棋盘里，黑手和白手交替进行一次落子，可落子的空间为全盘，所以在搜索树的第一层有n*n种可能性，第二层有n*n-1种动作，依次递减。当玩家首先在棋盘中在横向纵向以及对角上连成连续的五个棋子即判定为获胜。
+
+抽象成强化学习模型，为了表示黑白双方的位置信息，考虑五子棋落子位置和对手上一步落子位置有很大关系，这里用4层的8*8的棋盘表示落子信息。第一层为当前玩家全部落子位置，有子的位置为1，没有子的位置为0，同样的，第二层表示对方玩家全部落子位置，第三层为对手最后一步落子的位置，在这一层特征中只有一个位置为1，剩下位置都为0。由于零和博弈是极小极大化的过程所欲需要最后一层平面表示当前玩家是黑方还是白方，黑方为全1的矩阵，白方为全0的矩阵。在动作方式的建立上，由于棋盘可落子范围为全盘，所以初始化动作为8*8的概率矩阵，当某一位置以落子，将该位置从动作池中抽掉。五子棋是有严格胜负规则的游戏，所以奖励可以根据游戏的胜负规则来确定：如果进行到游戏的最后如果当前玩家获胜，奖励为+1，对手奖励为-1，反之如果当前玩家失败，奖励为-1，对手为+1，如果棋盘全满，双方无子可落，双方平局，奖励全部为0。
+
 在利用深度学习网络进行前期特征提取时，所有实验都用4层卷积网络进行特征的提取工作，在输出中，策略网络看成多分类问题激活函数选用softmax函数，价值网络看成回归问题，输出函数用tanh函数。
-每下一步用400次蒙特卡洛仿真，经过self-play形式进行博弈数据的生成，把数据放进经验池中，由于五子棋棋盘信息是严格对称的，而博弈数据的产生又是比较缓慢的，所以这里采用对期棋盘数据分别进行90度，180度，270度的翻转操作，这样有效进行了数据扩充，弥补了随机采样带来的样本利用率低的缺点。
+
+每下一步用400次蒙特卡洛仿真，经过self-play形式进行博弈数据的生成，把数据放进经验池中，五子棋棋盘信息是严格对称的，而博弈数据的产生又是比较缓慢的，所以这里采用对期棋盘数据分别进行90度，180度，270度的翻转操作，这样有效进行了数据扩充，弥补了随机采样带来的样本利用率低的缺点。
+
 \subsection{参数对模型效果影响曲线}
 在这一节对比了不同温度参数，不同噪声系数对实验结果的影响。可以通过计算策略网络的信息熵反应策略网络决策的分布离散程度，当信息熵越小，代表策略越明确，当信息熵越大，代表决策过程越趋向于随机。同时监控了神经网络的损失函数随迭代次数变化曲前，当损失函数呈下降趋势说明网络是趋近于收敛的，下降的越平滑说明网络越稳定。
-首先对比不同$r$值对各种参数的影响，如图所示：
-%\begin{figure}[!htp]
+
+首先对比不同$r$值对各种参数的影响，如图\ref{fig1:response}所示。
+
+%\begin{figure}[!htpb]
 %	\centering
-%	\begin{subfigure}{2.5cm}
-%		\centering
-%		\includegraphics[height=5cm]{example/r-entropy.png}
-%		\caption{学习率对交叉熵的影响}{}
-%	\end{subfigure}
-%	\hspace{4em}
-%	\begin{subfigure}{2.5cm}
-%		\centering
-%		\includegraphics[height=5cm]{example/r-loss.png}
-%		\caption{学习率对损失函数的影响}{}
-%	\end{subfigure}
-% 	\hspace{4em}
-% 	
-% 	\begin{subfigure}{2.5cm}
-% 		\centering
-% 		\includegraphics[height=5cm]{example/r-kl.png}
-% 		\caption{学习率对相对熵的影响}{}
-% 	\end{subfigure}
-% 	\begin{subfigure}{2.5cm}
-% 		\centering
-% 		\includegraphics[height=5cm]{example/r-winratio.png}
-% 		\caption{学习率对获胜率的影响}{}
-% 	\end{subfigure}
-%	\bicaption{学习率对不同参数的影响}{}
-%	\label{fig:r}
+%	\subcaptionbox{学习率对交叉熵的影响\label{fig1:response:a}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-entropy.png}}
+%	\hspace{0.5em}
+%	\subcaptionbox{学习率对损失函数的影响\label{fig1:response:b}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-loss.png}}
+%	\newline
+%	\centering
+%	\subcaptionbox{学习率对相对熵的影响\label{fig1:response:c}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-kl.png}}
+%	\hspace{0.5em}
+%	\subcaptionbox{学习率对获胜率的影响\label{fig1:response:d}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-winratio.png}}
+%	\bicaption
+%	{学习率对不同参数的影响}
+%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+%	\label{fig1:response}
 %\end{figure}
-%
 
 
-\begin{figure}[t]
+
+
+\begin{figure}[!htpb]
 	\centering
-	\subcaptionbox{学习率对交叉熵的影响\label{fig1:response:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-entropy.png}}
+	\subcaptionbox{噪声系数对交叉熵的影响\label{fig1response:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/epsilon-entropy.jpg}}
 	\hspace{0.5em}
-	\subcaptionbox{学习率对损失函数的影响\label{fig1:response:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-loss.png}}
+	\subcaptionbox{噪声系数对损失函数的影响\label{fig1response:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/epsilon-loss.jpg}}
 	\newline
 	\centering
-	\subcaptionbox{学习率对相对熵的影响\label{fig1:response:c}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-kl.png}}
+	\subcaptionbox{噪声系数对策略损失函数的影响\label{fig1response:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/epsilon-policyloss.jpg}}
 	\hspace{0.5em}
-	\subcaptionbox{学习率对获胜率的影响\label{fig1:response:d}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/r-winratio.png}}
+	\subcaptionbox{噪声系数对价值损失函数的影响\label{fig1response:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/epsilon-valueloss.jpg}}
 	\bicaption
-	{学习率对不同参数的影响}
+	{噪声系数对不同参数的影响}
 	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-	\label{fig1:response}
+	\label{fig1response}
 \end{figure}
 图\ref{fig1:response:a}展示了不同学习率下策略网络的交叉熵，代表了策略的离散程度。图\ref{fig1:response:b}展示了损失函数随迭代次数的改变，损失函数包括策略网络损失函数和价值网络损失函数，损失函数越小代表网络拟合self-play数据效果越好。图\ref{fig1:response:c}代表了网络参数的相对变化情况，自适应调整学习率时，根据相对熵调整学习率移动方向，所以相对熵稳定在一个相对小值利用模型学习。图\ref{fig1:response:d}代表在训练过程中智能体和一个提前训练好的用rollout策略学习的智能体进行博弈的结果，网络每迭代500次进行一次评估，对战10回合统计获胜比率。
 一个好的网络应该交叉熵随着迭代的进行呈下降趋势。当$r$过大时，交叉熵基本不变网络相当于随机输出动作，当$r=10$和$r=5$时可以看出智能体在随机输出动作，神经网络的损失函数没有呈下降的趋势，从获胜比例看获胜率相抵很低。固定迭代次数，交叉熵和损失函数随着学习率减小而减小。但并不是$r$越小越好，当$r=0.1$时从获胜比率看智能体模型并不稳定。
 
-\begin{figure}[t]
+\begin{figure}[!bpht]
 	\centering
 	\subcaptionbox{温度常数对交叉熵的影响\label{fig2:response:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/temp-entropy.png}}
@@ -285,6 +283,27 @@ r = \left\{ {\begin{array}{*{20}{c}}
 \end{figure}
 图\ref{fig2:response}展示了温度常数对不同参数的影响，这里面仍以交叉熵，相对熵，损失函数和获胜比率进行对比。
 可以看出来，$\tau$越大，策略网络趋向于探索策略，交叉熵下降缓慢，以$\tau=10$为例，从损失函数看，其损失函数下降缓慢，收敛较慢，从获胜率曲线看，其前期表现较其他参数快，因为前期蒙特卡洛搜索得到的结果并不可靠，单纯拟合网络并不是最好的结果，但是由于动作的不稳定性，随着迭代次数增加其获胜率上升比较缓慢。温度系数越小，策略越趋向于仅利用，损失函数下价格呢的会很快，交叉熵也下降的比较快，相当于贪心策略。但是从$\tau=0.1$曲线的获胜率来看，其后期表现很差。所以合理平衡探索和利用对于强化学习问题来说是很重要的。
+
+\begin{figure}[!bpht]
+	\centering
+	\subcaptionbox{学习率调整系数对交叉熵的影响\label{fig2response:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/lambda-entropy.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{学习率调整系数对损失函数的影响\label{fig2response:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/lambda-loss.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{学习率调整系数对策略损失函数的影响\label{fig2response:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/lambda-policy.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{学习率调整系数对价值损失函数的影响\label{fig2response:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/lambda-value.jpg}}
+	\bicaption
+	{学习率调整系数对不同参数的影响}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2response}
+\end{figure}
+
 \section{基于五子棋的单智体博弈实验}
 
 在上一节参数选择经验的基础上，这里我们选取参数信息进行不同算法之间结果比较。本实验对训练过程中神经网络的损失函数信息，学习率，总损失，以及策略端损失和价值网络损失进行对比，证明算法的可行性。策略网络损失代表神经网络动作部分和蒙特卡洛树拟合值的偏差，价值网络代表神经网络和真实值之间回归的偏差，网络优化的总损失函数为策略损失和价值损失之和。这里具体把两个损失函数分开，看不同算法得到的网络模型效果对比。在这里参数信息如下：
