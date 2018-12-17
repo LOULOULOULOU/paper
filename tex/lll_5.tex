@@ -11,7 +11,7 @@
 在上一章主要以双人棋盘类博弈策略进行描述，在本章将讨论非棋盘类单智能体对抗和多智能体对抗的问题。对于对称类棋盘游戏来说，其规则简单，并且可落子范围随着双方不断落子逐渐缩小，当棋盘全部走满双方平局，也就是动作双方最多走满全盘步数即可或胜负，应用场景比较单一，对于其他应用场景还有待扩展，除此之外，现有的强化学习模型大多数针对单智能体游戏类的决策任务，对于多智能体强化学习的扩展还有待发掘。原因是当对多智能体进行建模时，每一个智能体不仅需要感知外界环境，同时也需要及时获得其他智能体的信息，其他智能体进行动作可能会影响整个环境状态的变化，因此对于多智能体其动作空间和环境状态空间增大带来训练的困难。根据智能体之间的关系可以分为合作，竞争和既有竞争又有合作，对于这种比较复杂的模型，奖励的分配也是面临的难题之一。本章将介绍多智能体强化学习相关的理论算法基础后，设计一对一智能体相互对抗的实验场景，根据实际情况建立合理的状态动作以及奖励函数，并把实验场景拓展到多对多上，接着展示实验结果并进行分析。
 \section{多智能体强化学习理论基础}
 在多智能体研究中，智能体之间的关系可以是合作的、竞争的，也可以是两者兼而有之，许多算法都是为智能体特定的关系设立的。
-如\cite{Lazaridou2017Multi}主要针对多智能体合作问题提出的，基于假设所有智能体的行为都是在提高集体奖励的基础上进行的。另一种方式是通过共享参数达到合作的目的\ref{Gupta2017Cooperative},这需要所有的智能体模型都相同，奖励也相同。这些算法一般不适用于竞争环境或混合环境。本章将就单智能体间的相互对抗拓展到多智能体间的组队形式的对抗，也就是同队之间智能体是相互协作的，异队间智能体是相互对抗的，所有智能体的优化目标都是降低敌方奖励，增加本方奖励。
+如\cite{Lazaridou2017Multi}主要针对多智能体合作问题提出的，基于假设所有智能体的行为都是在提高集体奖励的基础上进行的。另一种方式是通过共享参数达到合作的目的\cite{Gupta2017Cooperative},这需要所有的智能体模型都相同，奖励也相同。这些算法一般不适用于竞争环境或混合环境。本章将就单智能体间的相互对抗拓展到多智能体间的组队形式的对抗，也就是同队之间智能体是相互协作的，异队间智能体是相互对抗的，所有智能体的优化目标都是降低敌方奖励，增加本方奖励。
 下面介绍常用的多智能体强化学习算法。
 \subsection{Minimax-Q学习}
 Minimax-Q\cite{Littman1994Markov}是一种适用于双人零和博弈的算法。其主要思想是两个智能体之间的奖励函数是互为相反数的，一方利益的最小化同时是另一方利益的最大化，所以两个智能体之间可以共享一个相同的奖励函数，是基于Q-learning算法进行实现的，Minimax—Q学习的值函数是Q值矩阵的最小最大化：
@@ -67,24 +67,137 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 当利用AC模型进行建模时，对于一对一智能体的网络结构，Actor网络和Critic网络是特征输入平面是相同的，都是把当前棋局作为原始输入，因此可以采用相同的深度学习网络进行特征提取，由于动作策略网络Actor输出的是概率值，Critic网络输出的是评分，在提取特征后可以把网络分成两部分，训练时，Actor根据当前的state选择一个Action，然后Critic可以根据state-action计算一个Q值，作为对Actor动作的反馈。Critic根据估计的Q值和实际的Q值来进行训练，Actor根据Critic的反馈来更新策略。测试时，我们只需要Actor就可以完成，此时不需要Critic的反馈。对于多对多智能体作战而言，对于每个智能体不仅要考虑到敌方智能体的位置，还要考虑我方其他智能体的状态。每个Agent的训练同单个智能体对抗算法的训练过程类似，不同的地方主要体现在Critic的输入上：在单个Agent的算法中，Critic的输入是一个state-action对信息，但是在多对多智能体中，每个Agent的Critic输入除自身的state-action信息外，还可以有额外的信息，比如其他Agent的动作。
 
 
-\section{一对一单智能体场景设计}
+\section{一对一智能体对抗}
 \subsection{问题描述}
-首先从单智能体入手，进行问题描述和建模。这里我们设计了一个吃小鱼游戏。
-游戏的规则如下：在10*10的网格里，左下角和右上角红蓝两方各有一个智能体，进行相互博弈。红蓝两方交替进行移动，直到一方被另一方吃掉。这里面有两个概念：追击角和逃逸角。红方对蓝方的追击角为红方速度方向和红蓝两方质心连线的夹角。蓝方的逃逸角为蓝方速度方向和蓝方到红方质心连线的夹角。如图\ref{zhuijijiao}所示。
+一对一飞机空战问题是典型的零和博弈模型。敌方和我方飞机总奖励为0，一方利益的最大化意味着另一方利益的最小化。这里根据飞机的场景设计一个简单的飞机作战规则，把三维空间简化成二维平面，在10*10的网格里，左下角和右上角红蓝两方各有一个智能体，进行相互博弈。红蓝两方交替进行移动，直到一方被另一方击灭，认为当前对抗回合结束。这里面有两个概念：追击角和逃逸角。红方对蓝方的追击角为红方速度方向和红蓝两方质心连线的夹角。蓝方的逃逸角为蓝方速度方向和蓝方到红方质心连线的夹角。如图\ref{fig:zhuijijiao}所示。
 \begin{figure}[!htp]
 	\centering
-	\includegraphics[width=10cm]{example/zhuijijiao.png}
+	\includegraphics[width=10cm]{example/zhuijijiao.jpg}
 	\bicaption[这里将出现在插图索引]
 	{追击角和逃逸角示意图}
 	{Neural network training pipeline}
 	\label{fig:zhuijijiao}
 \end{figure}
-红方吃掉蓝方的规则如下：红方到蓝方距离小于四个单位长度，红方的追击角小于30度，蓝方的逃逸角大于30度。反之蓝方对红方追击角小于30度，红方逃逸角大于30度，蓝方吃掉红方。最后留下的一方获胜。
+红方击灭蓝方的规则如下：红方到蓝方距离小于四个单位长度，红方的追击角小于30度，蓝方的逃逸角大于30度。反之蓝方对红方追击角小于30度，红方逃逸角大于30度，蓝方击灭红方。最后留下的一方获胜。
 \subsection{场景建模}
-在强化学习框架下，需要对状态空间，动作空间以及奖励函数进行合理表示。对于深度学习部分，需要设计状态空间特征提取的网络结构，以及网络输出的维度和激活函数和损失函数。这里采用蒙特卡洛搜索树进行建模，需要把强化学习思想映射到蒙特卡洛搜索树的结构上，包括根节点和分支包含的信息以及叶子节点返回的值。
-首先从游戏规则考虑，游戏获胜的条件和速度方向以及双方的位置信息有关，所以特征平面需要涵盖相关信息，在这里选择5层的10*10的特征空间表示状态信息，第一层为我方当前的位置，第二层为我方上一步的位置，第三层为敌方当前位置，第四层为敌方上一步位置，第五层用来表示我方是红方还是蓝方，红方为全0，蓝方为全1。在动作选择上，由于移动的位置只能是相连的上下左右四个方向，所以动作空间为4个离散的值，0代表向上移动，1代表向下移动，2代表左，3代表右，返回的奖励函数为获胜一方的奖励为1，失败一方奖励为-1。由于小鱼走过的位置还可以重复走，所以这里设置为当两方各自走过的步数超过200步还没有分出胜负，判定为平局，奖励为0。
-当每进行一次动作选择，对当前状态进行400次蒙特卡洛树搜索统计搜索结果。根据每个节点的访问次数利用式\ref{eq:gailu}和\ref{eq:zaosheng}进行节点信息统计得到当前状态的动作这里面选取温度常数$\tau=1$,噪声系数$\varepsilon=0.25$。在每一次蒙特卡洛树的搜索和建立中，对于当前位置可选的动作有上下左右，当智能体在围墙边界时，会把不能移动的动作去掉，根据可行动作进行树的节点扩展。对于当前智能体的子节点扩展就是对方可行的动作。在动作选择时，选取最大的$Q+U$进行动作的选择，这里$Q$代表经过当前节点获得的平均奖励，$U$为根据深度学习网络得到的先验概率。
+在强化学习框架下，需要对状态空间，动作空间以及奖励函数进行合理表示。为了拟合价值函数和策略函数需要用到深度学习网络，这部分涉及网络结构的设计，激活函数的选择和损失函数的设计。由于是经典的零和博弈模型，动作空间是离散的，树结构可以完整的表述强化学习指导飞机作战的过程。这里采用蒙特卡洛搜索树进行建模，需要把强化学习思想映射到蒙特卡洛搜索树的结构上，包括根节点和分支包含的信息以及叶子节点返回的值。
+\subsubsection{状态空间表示}
+首先从游戏规则考虑，游戏获胜的条件和速度方向以及双方的位置信息有关，所以特征平面需要涵盖相关信息，在这里选择5层的10*10的特征空间表示状态信息，第一层为我方当前的位置，第二层为我方上一步的位置，第三层为敌方当前位置，第四层为敌方上一步位置，由于敌方和我方可以用相同的网络进行拟合，所以需要有一层标识当前训练的是哪方，第五层用来表示我方是红方还是蓝方，红方为全0，蓝方为全1。
+\subsubsection{动作选择}
+在动作选择上，由于飞机移动的位置只能是相连的上下左右四个方向，所以动作空间为4个离散的值，步长为1个格子，0代表向上移动一格，1代表向下移动，2代表左，3代表右。当飞到战场边界时，当前动作认为是非法的。
+\subsubsection{奖励函数设计}
+这里我们定义了严格的获胜条件，所以奖励函数比较明确。返回的奖励函数为获胜一方的奖励为1，失败一方奖励为-1。当两方各自走过的步数超过200步还没有分出胜负，判定为平局，奖励为0。
+\subsubsection{深度学习模型}
+在网络结构上，由于涉及状态空间时包含了敌方的位置以及动作信息，所以价值网络和策略网络可以利用相同的网络结构进行特征提取，把经过CNN网络进行特征提取后的数据分别接入不同的全连接网络。由于策略网络输出的是各个动作的概率信息可以看成4分类的问题，所以接入$softmax$函数，价值网络是一个回归问题，接入$tanh$函数基于当前的状态和动作对最后的预测结果进行回归。
+深度学习的网络设置如表\ref{tab4}所示。
+\begin{table}[!h]
+	\centering
+	\caption{一对一深度学习网络参数}
+	\label{tab4}
+	\begin{tabular}{llll} \toprule
+		网络名称   & 网络结构  \\  \midrule
+		特征提取 &	Conv2d(4, 32, kernel\_size=3, padding=1), ReLU\\
+		&	Conv2d(32, 64, kernel\_size=3, padding=1),ReLU\\
+		&	Conv2d(64, 128, kernel\_size=3, padding=1), ReLU\\
+		价值网络&Conv2d(128, 2, kernel\_size=1), ReLU\\
+		&Linear(2*board\_width*board\_height, 64), ReLU\\
+		&Linear(64, 1),tanh\\
+		策略网络&12 Conv2d(128, 4, kernel\_size=1), ReLU\\
+		&Linear(4*board\_width*board\_height,
+		4),softmax\\
+		
+		\bottomrule
+	\end{tabular}
+\end{table}
 
+
+\subsection{一对一实验结果与分析}
+本节将就一对一智能体博弈模型进行结果展示和分析。在这里参数设置为当每进行一次动作选择，对当前状态进行400次蒙特卡洛树搜索统计搜索结果。根据每个节点的访问次数利用式\ref{eq:gailu}和\ref{eq:zaosheng}进行节点信息统计得到当前状态的动作。这里面选取温度常数$\tau=1$,噪声系数$\varepsilon=0.25$。在每一次蒙特卡洛树的搜索和建立中，对于当前位置可选的动作有上下左右，当智能体在作战边界时，会把不能移动的动作去掉，根据可行动作进行树的节点扩展。对于当前智能体的子节点扩展就是对方可行的动作。在动作选择时，选取最大的$Q+U$进行动作的选择，这里$Q$代表经过当前节点获得的平均奖励，$U$为根据深度学习网络得到的先验概率。
+
+
+在一对一实验中，给红蓝两方一个初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{fig1:yiduiyi1-2:a}所示。红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{fig1:yiduiyi1-2:b}。
+
+
+\begin{figure}[!h]
+	\centering
+	\subcaptionbox{\label{fig1:yiduiyi1-2:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi1.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{\label{fig1:yiduiyi1-2:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi2.jpg}}
+	\bicaption
+	{红蓝两方初始状态}
+	{Initial state of red and blue.}
+	\label{fig1:yiduiyi1-2}
+\end{figure}
+
+
+接着蓝方取动作概率中的最大值进行动作，依次循环人机对弈的结果如\ref{fig2:yiduiyi3-6}。
+
+\begin{figure}[!htp]
+	\centering
+	\subcaptionbox{\label{fig2:yiduiyi3-6:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi3.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{\label{fig2:yiduiyi3-6:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi4.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{\label{fig2:yiduiyi3-6:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi5.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{\label{fig2:yiduiyi3-6:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi6.jpg}}
+	\bicaption
+	{一对一人机对弈过程图示}
+	{Diagram of one-to-one man-machine game process.}
+	\label{fig2:yiduiyi3-6}
+\end{figure}
+
+对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，看其和红方的相对状态：
+\begin{figure}[!htp]
+	\centering
+	\subcaptionbox{向上双方状态\label{fig2:yiduiyi7-10:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi7.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向下双方状态\label{fig2:yiduiyi7-10:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi8.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{向左双方状态\label{fig2:yiduiyi7-10:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi9.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向右双方状态\label{fig2:yiduiyi7-10:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi10.jpg}}
+	\bicaption
+	{一对一人机对弈状态分析}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2:yiduiyi7-10}
+\end{figure}
+可以看出当蓝方向下走时，会被红方吃掉，对模型搜索得到的概率为0.0375。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析：
+
+\begin{figure}[!htpb]
+	\centering
+	\subcaptionbox{向上双方状态\label{fig2:yiduiyi11-14:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi11.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向下双方状态\label{fig2:yiduiyi11-14:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi12.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{向左双方状态\label{fig2:yiduiyi11-14:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi13.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{向右双方状态\label{fig2:yiduiyi11-14:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi14.jpg}}
+	\bicaption
+	{一对一人机对弈状态分析}
+	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\label{fig2:yiduiyi11-14}
+\end{figure}
+可见当蓝方向下时会把红方吃掉，对照模型搜索得到的概率，向下的概率最大，为0.755。
+
+从一对一结果分析可以看出训练后的模型已经能识别出在那种状态应该远离敌方，并在合适的位置进行攻击。
 
 
 \section{多对多智能体场景设计}
@@ -94,9 +207,9 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 
 \begin{figure}[!htbp]
 	\centering
-	\includegraphics[width=\hsize]{example/xiaoyuchushiweizhi.jpg}
+	\includegraphics[width=\hsize]{example/feijichushiweizhi.jpg}
 	\bicaption[这里将出现在插图索引]
-	{小鱼初始位置示意图}
+	{飞机初始位置示意图}
 	{The Diagrammatic Drawing of Minmax Search Tree}
 	\label{小鱼初始位置}
 \end{figure}
@@ -209,95 +322,95 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 
 \section{实验结果与分析}
 
-\subsection{一对一实验结果}
-在一对一实验中，给红蓝两方一个初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{yiduiyi1.jpg}：
-\begin{figure}[!hbtp]
-	\centering
-	\includegraphics[width=10cm]{example/yiduiyi1.jpg}
-	\bicaption[这里将出现在插图索引]
-	{红蓝两方初始状态}
-	{Neural network training pipeline}
-	\label{yiduiyi1.jpg}
-\end{figure}
-红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{yiduiyi2.jpg}
-
-
-\begin{figure}[!hbtp]
-	\centering
-	\includegraphics[width=10cm]{example/yiduiyi2.jpg}
-	\bicaption[这里将出现在插图索引]
-	{红蓝两方初始状态}
-	{Neural network training pipeline}
-	\label{yiduiyi2.jpg}
-\end{figure}
-
-接着蓝方取动作概率中的最大值进行动作，人机对弈的结果如下：
-
-
-\begin{figure}[!htp]
-	\centering
-	\subcaptionbox{\label{fig2:yiduiyi3-6:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi3.jpg}}
-	\hspace{0.5em}
-	\subcaptionbox{\label{fig2:yiduiyi3-6:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi4.jpg}}
-	\newline
-	\centering
-	\subcaptionbox{\label{fig2:yiduiyi3-6:c}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi5.jpg}}
-	\hspace{0.5em}
-	\subcaptionbox{\label{fig2:yiduiyi3-6:d}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi6.jpg}}
-	\bicaption
-	{一对一人机对弈过程图示}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-	\label{fig2:yiduiyi3-6}
-\end{figure}
-
-对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，看其和红方的相对状态：
-\begin{figure}[!htp]
-	\centering
-	\subcaptionbox{向上双方状态\label{fig2:yiduiyi7-10:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi7.jpg}}
-	\hspace{0.5em}
-	\subcaptionbox{向下双方状态\label{fig2:yiduiyi7-10:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi8.jpg}}
-	\newline
-	\centering
-	\subcaptionbox{向左双方状态\label{fig2:yiduiyi7-10:c}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi9.jpg}}
-	\hspace{0.5em}
-	\subcaptionbox{向右双方状态\label{fig2:yiduiyi7-10:d}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi10.jpg}}
-	\bicaption
-	{一对一人机对弈状态分析}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-	\label{fig2:yiduiyi7-10}
-\end{figure}
-可以看出当蓝方向下走时，会被红方吃掉，对模型搜索得到的概率为0.0375。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析：
-
-\begin{figure}[!htpb]
-	\centering
-	\subcaptionbox{向上双方状态\label{fig2:yiduiyi11-14:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi11.jpg}}
-	\hspace{0.5em}
-	\subcaptionbox{向下双方状态\label{fig2:yiduiyi11-14:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi12.jpg}}
-	\newline
-	\centering
-	\subcaptionbox{向左双方状态\label{fig2:yiduiyi11-14:c}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi13.jpg}}
-	\hspace{0.5em}
-	\subcaptionbox{向右双方状态\label{fig2:yiduiyi11-14:d}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/yiduiyi14.jpg}}
-	\bicaption
-	{一对一人机对弈状态分析}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-	\label{fig2:yiduiyi11-14}
-\end{figure}
-可见当蓝方向下时会把红方吃掉，对照模型搜索得到的概率，向下的概率最大，为0.755。
-
-从一对一结果分析可以看出训练后的模型已经能识别出在那种状态应该远离敌方，并在合适的位置进行攻击。
+%\subsection{一对一实验结果}
+%在一对一实验中，给红蓝两方一个初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{yiduiyi1.jpg}：
+%\begin{figure}[!hbtp]
+%	\centering
+%	\includegraphics[width=10cm]{example/feijiyiduiyi1.jpg}
+%	\bicaption[这里将出现在插图索引]
+%	{红蓝两方初始状态}
+%	{Neural network training pipeline}
+%	\label{yiduiyi1.jpg}
+%\end{figure}
+%红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{yiduiyi2.jpg}
+%
+%
+%\begin{figure}[!hbtp]
+%	\centering
+%	\includegraphics[width=10cm]{example/feijiyiduiyi2.jpg}
+%	\bicaption[这里将出现在插图索引]
+%	{红蓝两方初始状态}
+%	{Neural network training pipeline}
+%	\label{yiduiyi2.jpg}
+%\end{figure}
+%
+%接着蓝方取动作概率中的最大值进行动作，人机对弈的结果如下：
+%
+%
+%\begin{figure}[!htp]
+%	\centering
+%	\subcaptionbox{\label{fig2:yiduiyi3-6:a}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi3.jpg}}
+%	\hspace{0.5em}
+%	\subcaptionbox{\label{fig2:yiduiyi3-6:b}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi4.jpg}}
+%	\newline
+%	\centering
+%	\subcaptionbox{\label{fig2:yiduiyi3-6:c}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi5.jpg}}
+%	\hspace{0.5em}
+%	\subcaptionbox{\label{fig2:yiduiyi3-6:d}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi6.jpg}}
+%	\bicaption
+%	{一对一人机对弈过程图示}
+%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+%	\label{fig2:yiduiyi3-6}
+%\end{figure}
+%
+%对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，看其和红方的相对状态：
+%\begin{figure}[!htp]
+%	\centering
+%	\subcaptionbox{向上双方状态\label{fig2:yiduiyi7-10:a}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi7.jpg}}
+%	\hspace{0.5em}
+%	\subcaptionbox{向下双方状态\label{fig2:yiduiyi7-10:b}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi8.jpg}}
+%	\newline
+%	\centering
+%	\subcaptionbox{向左双方状态\label{fig2:yiduiyi7-10:c}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi9.jpg}}
+%	\hspace{0.5em}
+%	\subcaptionbox{向右双方状态\label{fig2:yiduiyi7-10:d}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi10.jpg}}
+%	\bicaption
+%	{一对一人机对弈状态分析}
+%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+%	\label{fig2:yiduiyi7-10}
+%\end{figure}
+%可以看出当蓝方向下走时，会被红方吃掉，对模型搜索得到的概率为0.0375。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析：
+%
+%\begin{figure}[!htpb]
+%	\centering
+%	\subcaptionbox{向上双方状态\label{fig2:yiduiyi11-14:a}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi11.jpg}}
+%	\hspace{0.5em}
+%	\subcaptionbox{向下双方状态\label{fig2:yiduiyi11-14:b}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi12.jpg}}
+%	\newline
+%	\centering
+%	\subcaptionbox{向左双方状态\label{fig2:yiduiyi11-14:c}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi13.jpg}}
+%	\hspace{0.5em}
+%	\subcaptionbox{向右双方状态\label{fig2:yiduiyi11-14:d}}
+%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi14.jpg}}
+%	\bicaption
+%	{一对一人机对弈状态分析}
+%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+%	\label{fig2:yiduiyi11-14}
+%\end{figure}
+%可见当蓝方向下时会把红方吃掉，对照模型搜索得到的概率，向下的概率最大，为0.755。
+%
+%从一对一结果分析可以看出训练后的模型已经能识别出在那种状态应该远离敌方，并在合适的位置进行攻击。
 
 
 
@@ -349,7 +462,7 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 在这里人类控制的红色小鱼先向上走一步，到达位置$(1,4)$计算红色小鱼对蓝色鱼和深蓝色鱼的位置信息，都没有被吃掉。轮到模型控制的深蓝色鱼进行动作，蓝色小鱼可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如下:
 \begin{figure}[!htp]
 	\centering
-	\includegraphics[width=10cm]{example/duoduiduo2.jpg}
+	\includegraphics[width=10cm]{example/feijiduoduiduo2.jpg}
 	\bicaption[这里将出现在插图索引]
 	{蓝方起始状态信息}
 	{Neural network training pipeline}
@@ -360,17 +473,17 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 \begin{figure}[!htp]
 	\centering
 	\subcaptionbox{\label{fig2:fig:duoduiduo3-6:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo3.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo3.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{\label{fig:duoduiduo3-6:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo4.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo4.jpg}}
 	\newline
 	\centering
 	\subcaptionbox{\label{fig:duoduiduo3-6:c}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo5.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo5.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{\label{fig:duoduiduo3-6:d}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo6.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo6.jpg}}
 	\bicaption
 	{多对多人机对弈过程图示}
 	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
@@ -384,10 +497,10 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 \begin{figure}[!hpbt]
 	\centering
 	\subcaptionbox{向下状态\label{fig2:duoduiduo:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo7.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo7.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{向右状态\label{fig2:duoduiduo:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo8.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo8.jpg}}
 	\bicaption
 	{多对多对弈状态分析}
 	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
@@ -397,10 +510,10 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 \begin{figure}[!hpbt]
 	\centering
 	\subcaptionbox{向左状态\label{fig3:duoduiduo:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo9.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo9.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{最终结果\label{fig3:duoduiduo:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduo10.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo10.jpg}}
 	\bicaption
 	{多对多对弈状态分析}
 	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
