@@ -47,52 +47,57 @@ NashQ_t^i(s) = \mathop {\max }\limits_{{a^1} \in {A^1},{a^2} \in {A^2}} Q_t^1(s,
 \end{equation}
 
 该算法存在一个问题是需要指定每个智能体和当前智能体的关系，并且要把智能体提前进行划分，每个智能体只具有个体能力不具有全局感知能力。
-\section{基于AC框架下的多智能体强化学习}
-前面所述经典的多智能体算法都是基于Q值学习进行策略更新的。当其他智能体进行动作时，需要不断更新当前智能体的Q值函数表，同时奖励的分配也是需要加规则进行干预的。这里考虑用AC框架进行多智能体强化学习的研究。奖励不需要人为分配，通过Critic函数告诉Actor当前动作的得分，对于一个有$N$个智能体的博弈环境，假设其策略梯度的参数为$\theta  = \{ {\theta _1},...{\theta _N}\} $，其策略的集合为$\pi  = \{ {\pi _1},...{\pi _N}\} $,对于第$i$个智能体，其期望收益的梯度$J({\theta _i}) = E[{R_i}]$为：
-\begin{equation}
-	{\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[{\nabla _{{\theta _i}}}\log {\pi _i}({a_i}|{o_i}){Q_i}^\pi ({a_i},...{a_N})]
-\end{equation}
-${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[{\nabla _{{\theta _i}}}\log {\pi _i}({a_i}|{o_i}){Q_i}^\pi ({a_i},...{a_N})]$
-其中${Q_i}^\pi ({a_i},...{a_N})$是将所有智能体的动作信息作为输入，对当前智能体的期望收益作为输出的打分函数。对于每一个智能体都有自己的奖励函数结构，因此这个打分函数可以学习到合作和竞争混合的结构。经验池中存储了每一个智能体的观测状态，动作信息和奖励$(x,{a_1},...{a_N},{r_1},...,{r_N})$，
-对于每一个智能体，其策略梯度函数的更新方式为：
-\begin{equation}
-	L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
-\end{equation}
-
-其中$y = {r_i} + \gamma {Q_i}^{u'}(x',{a_1}^\prime ,...,{a'_N}){|_{{{a'}_j} = {{u'}_j}({o_j})}}$
-这里$u' = \{ {u_{{{\theta '}_1}}},...,{u_{{{\theta '}_N}}}\} $是当其他智能体进行动作后新的策略。
-
-
-
-当利用AC模型进行建模时，对于一对一智能体的网络结构，Actor网络和Critic网络是特征输入平面是相同的，都是把当前棋局作为原始输入，因此可以采用相同的深度学习网络进行特征提取，由于动作策略网络Actor输出的是概率值，Critic网络输出的是评分，在提取特征后可以把网络分成两部分，训练时，Actor根据当前的state选择一个Action，然后Critic可以根据state-action计算一个Q值，作为对Actor动作的反馈。Critic根据估计的Q值和实际的Q值来进行训练，Actor根据Critic的反馈来更新策略。测试时，我们只需要Actor就可以完成，此时不需要Critic的反馈。对于多对多智能体作战而言，对于每个智能体不仅要考虑到敌方智能体的位置，还要考虑我方其他智能体的状态。每个Agent的训练同单个智能体对抗算法的训练过程类似，不同的地方主要体现在Critic的输入上：在单个Agent的算法中，Critic的输入是一个state-action对信息，但是在多对多智能体中，每个Agent的Critic输入除自身的state-action信息外，还可以有额外的信息，比如其他Agent的动作。
+%\section{基于AC框架下的多智能体强化学习}
+%前面所述经典的多智能体算法都是基于Q值学习进行策略更新的。当其他智能体进行动作时，需要不断更新当前智能体的Q值函数表，同时奖励的分配也是需要加规则进行干预的。这里考虑用AC框架进行多智能体强化学习的研究。奖励不需要人为分配，通过Critic函数告诉Actor当前动作的得分，对于一个有$N$个智能体的博弈环境，假设其策略梯度的参数为$\theta  = \{ {\theta _1},...{\theta _N}\} $，其策略的集合为$\pi  = \{ {\pi _1},...{\pi _N}\} $,对于第$i$个智能体，其期望收益的梯度$J({\theta _i}) = E[{R_i}]$为：
+%\begin{equation}
+%	{\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[{\nabla _{{\theta _i}}}\log {\pi _i}({a_i}|{o_i}){Q_i}^\pi ({a_i},...{a_N})]
+%\end{equation}
+%${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[{\nabla _{{\theta _i}}}\log {\pi _i}({a_i}|{o_i}){Q_i}^\pi ({a_i},...{a_N})]$
+%其中${Q_i}^\pi ({a_i},...{a_N})$是将所有智能体的动作信息作为输入，对当前智能体的期望收益作为输出的打分函数。对于每一个智能体都有自己的奖励函数结构，因此这个打分函数可以学习到合作和竞争混合的结构。经验池中存储了每一个智能体的观测状态，动作信息和奖励$(x,{a_1},...{a_N},{r_1},...,{r_N})$，
+%对于每一个智能体，其策略梯度函数的更新方式为：
+%\begin{equation}
+%	L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
+%\end{equation}
+%
+%其中$y = {r_i} + \gamma {Q_i}^{u'}(x',{a_1}^\prime ,...,{a'_N}){|_{{{a'}_j} = {{u'}_j}({o_j})}}$
+%这里$u' = \{ {u_{{{\theta '}_1}}},...,{u_{{{\theta '}_N}}}\} $是当其他智能体进行动作后新的策略。
+%
+%
+%
+%当利用AC模型进行建模时，对于一对一智能体的网络结构，Actor网络和Critic网络是特征输入平面是相同的，都是把当前棋局作为原始输入，因此可以采用相同的深度学习网络进行特征提取，由于动作策略网络Actor输出的是概率值，Critic网络输出的是评分，在提取特征后可以把网络分成两部分，训练时，Actor根据当前的state选择一个Action，然后Critic可以根据state-action计算一个Q值，作为对Actor动作的反馈。Critic根据估计的Q值和实际的Q值来进行训练，Actor根据Critic的反馈来更新策略。测试时，我们只需要Actor就可以完成，此时不需要Critic的反馈。对于多对多智能体作战而言，对于每个智能体不仅要考虑到敌方智能体的位置，还要考虑我方其他智能体的状态。每个Agent的训练同单个智能体对抗算法的训练过程类似，不同的地方主要体现在Critic的输入上：在单个Agent的算法中，Critic的输入是一个state-action对信息，但是在多对多智能体中，每个Agent的Critic输入除自身的state-action信息外，还可以有额外的信息，比如其他Agent的动作。
 
 
 \section{一对一智能体对抗}
 \subsection{问题描述}
-一对一飞机空战问题是典型的零和博弈模型。敌方和我方飞机总奖励为0，一方利益的最大化意味着另一方利益的最小化。这里根据飞机的场景设计一个简单的飞机作战规则，把三维空间简化成二维平面，在10*10的网格里，左下角和右上角红蓝两方各有一个智能体，进行相互博弈。红蓝两方交替进行移动，直到一方被另一方击灭，认为当前对抗回合结束。这里面有两个概念：追击角和逃逸角。红方对蓝方的追击角为红方速度方向和红蓝两方质心连线的夹角。蓝方的逃逸角为蓝方速度方向和蓝方到红方质心连线的夹角。如图\ref{fig:zhuijijiao}所示。
+一对一飞机空战问题是典型的零和博弈模型。敌方和我方飞机总奖励为0，一方利益的最大化意味着另一方利益的最小化。这里根据飞机的场景设计一个简单的飞机作战规则，把三维空间简化成二维平面，在10*10的网格里，左下角和右上角红蓝两方各有一个智能体，进行相互博弈。红蓝两方交替进行移动，直到一方被另一方击灭，认为当前对抗回合结束。这里面有两个概念：追击角和逃逸角。红方对蓝方的追击角为红方速度方向和红蓝两方质心连线的夹角。蓝方的逃逸角为蓝方速度方向和蓝方到红方质心连线的夹角,如图\ref{fig:zhuijijiao}所示。
 \begin{figure}[!htp]
 	\centering
-	\includegraphics[width=10cm]{example/zhuijijiao.jpg}
+	\includegraphics[width=7cm]{example/zhuijijiao.jpg}
 	\bicaption[这里将出现在插图索引]
 	{追击角和逃逸角示意图}
 	{Neural network training pipeline}
 	\label{fig:zhuijijiao}
 \end{figure}
-红方击灭蓝方的规则如下：红方到蓝方距离小于四个单位长度，红方的追击角小于30度，蓝方的逃逸角大于30度。反之蓝方对红方追击角小于30度，红方逃逸角大于30度，蓝方击灭红方。最后留下的一方获胜。
+
+红方击灭蓝方的规则如下：红方到蓝方距离小于四个单位长度，红方的追击角小于$30^\circ$，蓝方的逃逸角大于$30^\circ$。反之蓝方对红方追击角小于$30^\circ$，红方逃逸角大于$30^\circ$，蓝方击灭红方。最后留下的一方获胜。
+
 \subsection{场景建模}
-在强化学习框架下，需要对状态空间，动作空间以及奖励函数进行合理表示。为了拟合价值函数和策略函数需要用到深度学习网络，这部分涉及网络结构的设计，激活函数的选择和损失函数的设计。由于是经典的零和博弈模型，动作空间是离散的，树结构可以完整的表述强化学习指导飞机作战的过程。这里采用蒙特卡洛搜索树进行建模，需要把强化学习思想映射到蒙特卡洛搜索树的结构上，包括根节点和分支包含的信息以及叶子节点返回的值。
-\subsubsection{状态空间表示}
-首先从游戏规则考虑，游戏获胜的条件和速度方向以及双方的位置信息有关，所以特征平面需要涵盖相关信息，在这里选择5层的10*10的特征空间表示状态信息，第一层为我方当前的位置，第二层为我方上一步的位置，第三层为敌方当前位置，第四层为敌方上一步位置，由于敌方和我方可以用相同的网络进行拟合，所以需要有一层标识当前训练的是哪方，第五层用来表示我方是红方还是蓝方，红方为全0，蓝方为全1。
-\subsubsection{动作选择}
+在强化学习框架下，需要对状态空间，动作空间以及奖励函数进行合理表示。为了拟合价值函数和策略函数需要用到深度学习网络，这部分涉及网络结构的设计，激活函数的选择和损失函数的设计。由于是经典的零和博弈模型，动作空间是离散的，树结构可以完整的表示利用强化学习指导飞机对战的过程。这里采用蒙特卡洛搜索树进行建模，需要把强化学习算法映射到蒙特卡洛搜索树的结构上，包括根节点和分支包含的价值和概率函数以及叶子节点返回的值。
+
+在状态空间表示上，首先从游戏规则考虑，游戏获胜的条件和速度方向以及双方的位置信息有关，所以特征平面需要涵盖相关信息，在这里选择5层的10*10的特征空间表示状态信息，第一层为我方当前的位置，第二层为我方上一步的位置，第三层为敌方当前位置，第四层为敌方上一步位置，由于敌方和我方可以用相同的网络进行拟合，所以需要有一层标识当前训练的是哪方，第五层用来表示我方是红方还是蓝方，红方为全0，蓝方为全1。
+
 在动作选择上，由于飞机移动的位置只能是相连的上下左右四个方向，所以动作空间为4个离散的值，步长为1个格子，0代表向上移动一格，1代表向下移动，2代表左，3代表右。当飞到战场边界时，当前动作认为是非法的。
-\subsubsection{奖励函数设计}
+
 这里我们定义了严格的获胜条件，所以奖励函数比较明确。返回的奖励函数为获胜一方的奖励为1，失败一方奖励为-1。当两方各自走过的步数超过200步还没有分出胜负，判定为平局，奖励为0。
-\subsubsection{深度学习模型}
+
 在网络结构上，由于涉及状态空间时包含了敌方的位置以及动作信息，所以价值网络和策略网络可以利用相同的网络结构进行特征提取，把经过CNN网络进行特征提取后的数据分别接入不同的全连接网络。由于策略网络输出的是各个动作的概率信息可以看成4分类的问题，所以接入$softmax$函数，价值网络是一个回归问题，接入$tanh$函数基于当前的状态和动作对最后的预测结果进行回归。
 深度学习的网络设置如表\ref{tab4}所示。
-\begin{table}[!h]
+
+\begin{table}[htbp]
 	\centering
-	\caption{一对一深度学习网络参数}
+	\bicaption[指向一个表格的表目录索引]
+	{一对一深度学习网络参数}
+	{ Deep learning network parameters }
 	\label{tab4}
 	\begin{tabular}{llll} \toprule
 		网络名称   & 网络结构  \\  \midrule
@@ -112,17 +117,16 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 
 
 \subsection{一对一实验结果与分析}
-本节将就一对一智能体博弈模型进行结果展示和分析。在这里参数设置为当每进行一次动作选择，对当前状态进行400次蒙特卡洛树搜索统计搜索结果。根据每个节点的访问次数利用式\ref{eq:gailu}和\ref{eq:zaosheng}进行节点信息统计得到当前状态的动作。这里面选取温度常数$\tau=1$,噪声系数$\varepsilon=0.25$。在每一次蒙特卡洛树的搜索和建立中，对于当前位置可选的动作有上下左右，当智能体在作战边界时，会把不能移动的动作去掉，根据可行动作进行树的节点扩展。对于当前智能体的子节点扩展就是对方可行的动作。在动作选择时，选取最大的$Q+U$进行动作的选择，这里$Q$代表经过当前节点获得的平均奖励，$U$为根据深度学习网络得到的先验概率。
+本节将就一对一智能体博弈模型进行结果展示和分析。在这里参数设置为当每进行一次动作选择，对当前状态进行400次蒙特卡洛树搜索统计搜索结果。根据每个节点的访问次数利用式\ref{eq:gailu}和\ref{eq:zaosheng}进行节点信息统计得到当前状态的动作。这里面选取温度常数$\tau=1$,噪声系数$\varepsilon=0.25$,学习率调整参数为$\lambda=1.5$。在每一次蒙特卡洛树的搜索和建立中，对于当前位置可选的动作有上下左右，当智能体在作战边界时，会把不能移动的动作去掉，根据可行动作进行树的节点扩展。对于当前智能体的子节点扩展就是对方可行的动作。在动作选择时，选取最大的$Q+U$进行动作的选择，这里$Q$代表经过当前节点获得的平均奖励，$U$为根据深度学习网络得到的先验概率。
 
 
-在一对一实验中，给红蓝两方一个初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{fig1:yiduiyi1-2:a}所示。红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{fig1:yiduiyi1-2:b}。
+在一对一实验中，给红蓝两方初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{fig1:yiduiyi1-2:a}所示。红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{fig1:yiduiyi1-2:b}。
 
 
-\begin{figure}[!h]
+\begin{figure}[htpb]
 	\centering
 	\subcaptionbox{\label{fig1:yiduiyi1-2:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi1.jpg}}
-	\hspace{0.5em}
 	\subcaptionbox{\label{fig1:yiduiyi1-2:b}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi2.jpg}}
 	\bicaption
@@ -132,20 +136,18 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 \end{figure}
 
 
-接着蓝方取动作概率中的最大值进行动作，依次循环人机对弈的结果如\ref{fig2:yiduiyi3-6}。
+接着蓝方取动作概率中的最大值进行动作，依次循环进行动作选择。人机对弈过程如\ref{fig2:yiduiyi3-6}。对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，分析其和红方的相对状态,如图\ref{fig2:yiduiyi7-10}
 
-\begin{figure}[!htp]
+\begin{figure}[htp]
 	\centering
 	\subcaptionbox{\label{fig2:yiduiyi3-6:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi3.jpg}}
-	\hspace{0.5em}
 	\subcaptionbox{\label{fig2:yiduiyi3-6:b}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi4.jpg}}
 	\newline
 	\centering
 	\subcaptionbox{\label{fig2:yiduiyi3-6:c}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi5.jpg}}
-	\hspace{0.5em}
 	\subcaptionbox{\label{fig2:yiduiyi3-6:d}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi6.jpg}}
 	\bicaption
@@ -154,8 +156,8 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\label{fig2:yiduiyi3-6}
 \end{figure}
 
-对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，看其和红方的相对状态：
-\begin{figure}[!htp]
+
+\begin{figure}[htp]
 	\centering
 	\subcaptionbox{向上双方状态\label{fig2:yiduiyi7-10:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi7.jpg}}
@@ -169,14 +171,15 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\hspace{0.5em}
 	\subcaptionbox{向右双方状态\label{fig2:yiduiyi7-10:d}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi10.jpg}}
-	\bicaption
-	{一对一人机对弈状态分析}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\bicaption[一对一人机对弈状态分析]
+	{一对一人机对弈状态分析(1)}
+	{Analysis of one-on-one man-machine game status(1).}
 	\label{fig2:yiduiyi7-10}
 \end{figure}
-可以看出当蓝方向下走时，会被红方吃掉，对模型搜索得到的概率为0.0375。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析：
 
-\begin{figure}[!htpb]
+可以看出当蓝方向下走时，会被红方击落，对模型搜索得到的概率为0.0375。而选择向左靠近红方时达不到最佳击落红方的位置，所以蓝方学到的策略是原理红方寻找下一个最佳攻击位置。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析，如图\ref{fig2:yiduiyi11-14}。当蓝方原理红方后获得了更小的攻击角。分析其可能的四个动作，可见当蓝方向下时会把红方击落，对照蒙特卡洛搜索得到的概率，向下的概率最大，为0.755。
+
+\begin{figure}[htpb]
 	\centering
 	\subcaptionbox{向上双方状态\label{fig2:yiduiyi11-14:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi11.jpg}}
@@ -191,75 +194,83 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\subcaptionbox{向右双方状态\label{fig2:yiduiyi11-14:d}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi14.jpg}}
 	\bicaption
-	{一对一人机对弈状态分析}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	{一对一人机对弈状态分析(2)}
+	{Analysis of man-machine game status(2).}
 	\label{fig2:yiduiyi11-14}
 \end{figure}
-可见当蓝方向下时会把红方吃掉，对照模型搜索得到的概率，向下的概率最大，为0.755。
-
-从一对一结果分析可以看出训练后的模型已经能识别出在那种状态应该远离敌方，并在合适的位置进行攻击。
 
 
-\section{多对多智能体场景设计}
+在本实验中，设计了一对一智能体对抗的场景，通过设置合理的参数，对训练出来的模型进行人机博弈实验，并详细跟踪了博弈关键步骤的模型输出结果，模型输出的策略和经过计算分析得到的策略一致。可以看出训练后的模型已经能够进行自主决策，并寻找合适的位置在最小的步数内攻击获胜。
 
+
+\section{二对二智能体对抗}
+上一节介绍的是一对一智能体之间的博弈问题，本节将进一步研究二对二智能体对抗问题。对于多个智能体之间既有合作又有对抗的情况，奖励的合理分配是至关重要的。在传统的经典算法中，奖励分配是人为设定规则进行奖励分配和战术调整。在本节我们用深度强化学习处理多个智能体之间的竞争与合作的关系。
+\subsection{基于AC框架下的多智能体强化学习}
+经典的多智能体算法都是基于Q值学习进行策略更新的。当其他智能体进行动作时，需要不断更新当前智能体的Q值函数表，同时奖励的分配也是需要加规则进行干预的。本节用AC框架进行多智能体强化学习的研究，奖励不需要人为分配，通过Critic函数告诉Actor当前动作的得分，对于一个有$N$个智能体的博弈环境，假设其策略梯度的参数为$\theta  = \{ {\theta _1},...{\theta _N}\} $，其策略的集合为$\pi  = \{ {\pi _1},...{\pi _N}\} $,对于第$i$个智能体，其期望收益的梯度$J({\theta _i}) = E[{R_i}]$如式\ref{eq:tidu}
+\begin{equation}
+\label{eq:tidu}
+{\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[{\nabla _{{\theta _i}}}\log {\pi _i}({a_i}|{o_i}){Q_i}^\pi ({a_i},...{a_N})]
+\end{equation}
+${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[{\nabla _{{\theta _i}}}\log {\pi _i}({a_i}|{o_i}){Q_i}^\pi ({a_i},...{a_N})]$
+其中${Q_i}^\pi ({a_i},...{a_N})$是将所有智能体的动作信息作为输入，对当前智能体的期望收益作为输出的打分函数。对于每一个智能体都有自己的奖励函数结构，因此这个打分函数可以学习到合作和竞争混合的结构。经验池中存储了每一个智能体的观测状态，动作信息和奖励$(x,{a_1},...{a_N},{r_1},...,{r_N})$，
+对于每一个智能体，其策略梯度函数的更新方式如式\ref{gengxin}。
+\begin{equation}
+\label{gengxin}
+L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
+\end{equation}
+
+其中$y = {r_i} + \gamma {Q_i}^{u'}(x',{a_1}^\prime ,...,{a'_N}){|_{{{a'}_j} = {{u'}_j}({o_j})}}$
+这里$u' = \{ {u_{{{\theta '}_1}}},...,{u_{{{\theta '}_N}}}\} $是当其他智能体进行动作后新的策略。
+
+当利用AC模型进行建模时，对于一对一智能体的网络结构，策略网络和价值网络是特征输入平面是相同的，对于多对多智能体作战而言，对于每个智能体不仅要考虑到敌方智能体的位置，还要考虑我方其他智能体的状态。所以在设计输入特征时候需要考虑其他智能体的状态和动作信息。在蒙特卡洛搜索树中每个智能体进行动作后都应相应的扩展一层叶子节点，同时要考虑树的叶子节点回传的过程。
 \subsection{问题描述}
-本节在上一节的基础上，由一对一智能体之间的相互博弈拓展到多对多智能体的相互博弈。被吃掉的规则和上一节相同。这里红方蓝方各有两个小鱼，分别在左下角和右上角，给两方小鱼一个初始速度和位置，游戏规则如下：四个小鱼轮流进行移动，移动的范围是上下左右，当下一动作撞到墙壁或本方队友时，认为该动作是非法的。红色和粉色的小鱼为一队，浅蓝色和深蓝色小鱼为一队，行动的顺序为红，深蓝，粉，浅蓝。四个小鱼初始位置如图\ref{小鱼初始位置}。
-
-\begin{figure}[!htbp]
-	\centering
-	\includegraphics[width=\hsize]{example/feijichushiweizhi.jpg}
-	\bicaption[这里将出现在插图索引]
-	{飞机初始位置示意图}
-	{The Diagrammatic Drawing of Minmax Search Tree}
-	\label{小鱼初始位置}
-\end{figure}
-
-给红色小鱼初始位置为(1,2)初速度为向上，粉色小鱼初始位置为$(2,2)$初速度为向上，深蓝色小鱼初始位置为(7,7),浅蓝色小鱼初始位置为$(8,7)$,初速度都为向下。游戏结束的规则为当有任意一条小鱼被吃掉，该方判为输家。因此整个游戏的流程为：
-
-\begin{algorithm}[!htbp]
-	\caption{多对多游戏流程}% Ëã·¨±êÌâ
+本节在上一节的基础上，由一对一智能体之间的相互博弈拓展到二对二智能体的相互博弈。击落敌方一架飞机的规则和上一节相同，即距离小于4个格子长度，追击角小于$30^\circ$，敌方飞机逃逸角大于$30^\circ$。这里红方蓝方各有两架飞机，给两方飞机一个初始速度和位置，作战规则如下：四架飞机轮流进行移动，行动的范围是上下左右，当下一动作超出作战范围或撞到本方飞机时，认为该动作是非法的。智能体动作的顺序为红一，蓝一，红二，蓝二，依次循环直到有一方获胜。游戏结束的规则为当有任意一方有至少一架飞机被击落，该方判为输家。因此整个游戏的流程如算法\ref{erduierliucheng}所示。
+\begin{algorithm}[htbp]
+	\caption{飞机二对二作战流程}% Ëã·¨±êÌâ
+	\label{erduierliucheng}
 	\begin{algorithmic}[1]%Ò»ÐÐÒ»¸ö±êÐÐºÅ
-		\For{每个智能体移动的次数不超过移动步数上限 }
-		\State 红色小鱼根据强化学习策略从合法动作中选择一个进行动作
-		\State 判断红色小鱼和对方两条小鱼的状态关系
-		\If {任意一条小鱼被吃掉}
+		\For{每架飞机移动的次数不超过移动步数上限 }
+		\State 红一根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断红一和蓝方两架飞机的状态关系
+		\If {任意一架飞机被击落}
 		\State 游戏结束，跳出循环,返回结果
 		\EndIf
-		\State 蓝色小鱼根据强化学习策略从合法动作中选择一个进行动作
-		\State 判断蓝色小鱼和对方两条小鱼的状态关系
-		\If {任意一条小鱼被吃掉}
+		\State 蓝一根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断蓝一和红方两架飞机的状态关系
+		\If {任意一架飞机被击落}
 		\State 游戏结束，跳出循环,返回结果
 		\EndIf
-		\State 粉色小鱼根据强化学习策略从合法动作中选择一个进行动作
-		\State 判断粉色小鱼和对方两条小鱼的状态关系
-		\If {任意一条小鱼被吃掉}
+		\State 红二根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断红二和蓝方两架飞机的状态关系
+		\If {任意一架飞机被击落}
 		\State 游戏结束，跳出循环,返回结果
 		\EndIf
-		\State 浅蓝色小鱼根据强化学习策略从合法动作中选择一个进行动作
-		\State 判断浅蓝色小鱼和对方两条小鱼的状态关系
-		\If {任意一条小鱼被吃掉}
+		\State 蓝二根据强化学习策略从合法动作中选择一个进行动作
+		\State 判断蓝二和红方两架飞机的状态关系
+		\If {任意一架飞机被击落}
 		\State 游戏结束，跳出循环,返回结果
 		\EndIf
-		
 		\EndFor
 	\end{algorithmic}
 \end{algorithm}
-\subsection{场景建模}
-在多对多场景中，相当于每个智能体不仅需要感知当前状态，还需要感知本方智能体和敌方智能体所有的动作信息。智能体的动作可以通过上一步的位置和当先位置得到，所以在本实验中状态设置为10*10*9。与上一节一样，10*10代表棋盘大小，第一层是红色小鱼当前位置，第二层为红色小鱼上一步位置，第三层第四层依次表示粉色小鱼信息，第五，六层为蓝色小鱼信息，第七，八层为浅蓝色小鱼信息，第九层带表当前训练的是哪个智能体。
-由于设计的状态包含了当前环境状态和其他智能体的动作信息，在利用深度学习网络拟合值函数和策略函数时，特征提取部分的网络结构可以共享，深度学习网络结构如下图所示：
 
-\begin{figure}[!htpb]
+\subsection{场景建模}
+
+在二对二场景中，相当于每个智能体不仅需要感知当前状态，还需要感知本方智能体和敌方智能体所有的动作信息。智能体的动作可以通过上一步的位置和当先位置得到，所以在本实验中状态设置为10*10*9。10*10代表棋盘大小，第一层是红一当前位置，第二层为红一上一步位置，第三层第四层依次表示红二当前位置和上一步位置，第五，六层为蓝一信息，第七，八层为蓝二信息，第九层带表当前训练的是哪个飞机，可选数值为0,1,2,3。这样所有飞机的位置信息，动作信息都可以从状态空间中反解出来。由于设计的状态包含了当前环境状态和其他智能体的动作信息，所以在利用深度学习网络拟合值函数和策略函数时，特征提取部分的网络结构可以共享，深度学习网络结构如图\ref{fig:wangluojiegoutu}所示。网络分为共用的特征提取部分，策略网络后面用$softmax$函数进行4分类，价值网络后面用$tanh$函数进行回归。数据的标签通过蒙特卡洛搜索树得到。
+
+\begin{figure}[htpb]
 	\centering
 	\includegraphics[width=10cm]{example/wangluojiegoutu.jpg}
-	\bicaption[这里将出现在插图索引]
-	{多对多深度学习网络结构图}
+	\bicaption[二对二深度学习网络结构图]
+	{二对二深度学习网络结构图}
 	{Neural network training pipeline}
 	\label{fig:wangluojiegoutu}
 \end{figure}
 
-多对多强化学习博弈算法流程图为：
-\begin{algorithm}[!htbp]
+二对二强化学习博弈算法流程如算法\ref{duoduiduosuanfa}所示。在监测网络结构是否是最优的时候，保存当前最新模型和历史最优模型进行相互博弈，当获胜率大于一定阈值时，进行网络参数的更新，否则最优模型不变。
+\begin{algorithm}[htbp]
 	\caption{多对多强化学习博弈算法}% Ëã·¨±êÌâ
+	\label{duoduiduosuanfa}
 	\begin{algorithmic}[1]%Ò»ÐÐÒ»¸ö±êÐÐºÅ
 		\Require
 		包含当前位置和历史走过位置的状态信息，游戏动作规则，游戏奖励规则。随机初始化神经网络的参数$\theta_0$
@@ -292,7 +303,7 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 		\end{algorithmic}
 		\end{algorithm}
 
-		\begin{algorithm}[!htbp]
+		\begin{algorithm}[htbp]
 		\begin{algorithmic}[1]
 		\algrestore{MergeSort}
 		\State 记录当前幕中经过的所有的状态和最后游戏的结果${r_T} \in \{  - 1, + 1\} $
@@ -318,112 +329,18 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\end{algorithmic}
 \end{algorithm}
 
-从上述算法可以看出，$MCTS$可以看作是一个策略改进的实现，$MCTS$在深度学习输出的先验概率${f_{{\theta _{i - 1}}}}$基础上搜索策略${\pi _t} = {\alpha _{{\theta _{i - 1}}}}({s_t})$。树的边建立了一系列状态动作对$(s,a)$，记录了先验概率$P(s,a)$,节点访问次数$N(s,a)$和状态动作值$Q(s,a)$。$self-play$的过程可以看作策略迭代网络的标签数据，在每一次自我博弈中，选择获胜玩家的数据进行一个正样本。训练深度学习网络权重${\theta _i}$,价值网络损失函数为回归常用的均方误差${(z - v)^2}$，策略网络为交叉熵$ - {\pi ^T}\log p$。这里同时训练两个网络所以将两项目标函数进行加和，利用梯度下降法进行网络参数的更新。
+算法描述可以看出，$MCTS$在深度学习输出的先验概率${f_{{\theta _{i - 1}}}}$基础上搜索策略${\pi _t} = {\alpha _{{\theta _{i - 1}}}}({s_t})$。树节点的连边建立了一系列状态动作对$(s,a)$，记录了先验概率$P(s,a)$,节点访问次数$N(s,a)$和状态动作值$Q(s,a)$。$self-play$的过程产生了策略迭代网络的带标签的数据，在每一次自我博弈中，选择获胜玩家的数据进行一个正样本。训练深度学习网络权重${\theta _i}$,价值网络损失函数为回归常用的均方误差${(z - v)^2}$，策略网络为交叉熵$ - {\pi ^T}\log p$。这里同时训练两个网络所以将两项目标函数进行加和，利用梯度下降法进行网络参数的更新。
 
-\section{实验结果与分析}
-
-%\subsection{一对一实验结果}
-%在一对一实验中，给红蓝两方一个初始位置分别为$(2,3)$和$(7,7)$,红方初速度为向上，蓝方初速度为向下。这里人控制红方，蓝方为学习到的智能体模型。红蓝两方的初始状态如图\ref{yiduiyi1.jpg}：
-%\begin{figure}[!hbtp]
-%	\centering
-%	\includegraphics[width=10cm]{example/feijiyiduiyi1.jpg}
-%	\bicaption[这里将出现在插图索引]
-%	{红蓝两方初始状态}
-%	{Neural network training pipeline}
-%	\label{yiduiyi1.jpg}
-%\end{figure}
-%红方为先行玩家，首先让红方向右走一步，得到蓝方的动作概率，如图\ref{yiduiyi2.jpg}
-%
-%
-%\begin{figure}[!hbtp]
-%	\centering
-%	\includegraphics[width=10cm]{example/feijiyiduiyi2.jpg}
-%	\bicaption[这里将出现在插图索引]
-%	{红蓝两方初始状态}
-%	{Neural network training pipeline}
-%	\label{yiduiyi2.jpg}
-%\end{figure}
-%
-%接着蓝方取动作概率中的最大值进行动作，人机对弈的结果如下：
-%
-%
-%\begin{figure}[!htp]
-%	\centering
-%	\subcaptionbox{\label{fig2:yiduiyi3-6:a}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi3.jpg}}
-%	\hspace{0.5em}
-%	\subcaptionbox{\label{fig2:yiduiyi3-6:b}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi4.jpg}}
-%	\newline
-%	\centering
-%	\subcaptionbox{\label{fig2:yiduiyi3-6:c}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi5.jpg}}
-%	\hspace{0.5em}
-%	\subcaptionbox{\label{fig2:yiduiyi3-6:d}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi6.jpg}}
-%	\bicaption
-%	{一对一人机对弈过程图示}
-%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-%	\label{fig2:yiduiyi3-6}
-%\end{figure}
-%
-%对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，看其和红方的相对状态：
-%\begin{figure}[!htp]
-%	\centering
-%	\subcaptionbox{向上双方状态\label{fig2:yiduiyi7-10:a}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi7.jpg}}
-%	\hspace{0.5em}
-%	\subcaptionbox{向下双方状态\label{fig2:yiduiyi7-10:b}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi8.jpg}}
-%	\newline
-%	\centering
-%	\subcaptionbox{向左双方状态\label{fig2:yiduiyi7-10:c}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi9.jpg}}
-%	\hspace{0.5em}
-%	\subcaptionbox{向右双方状态\label{fig2:yiduiyi7-10:d}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi10.jpg}}
-%	\bicaption
-%	{一对一人机对弈状态分析}
-%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-%	\label{fig2:yiduiyi7-10}
-%\end{figure}
-%可以看出当蓝方向下走时，会被红方吃掉，对模型搜索得到的概率为0.0375。在\ref{fig2:yiduiyi3-6:c}状态时，对于蓝方执行四个动作进行分析：
-%
-%\begin{figure}[!htpb]
-%	\centering
-%	\subcaptionbox{向上双方状态\label{fig2:yiduiyi11-14:a}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi11.jpg}}
-%	\hspace{0.5em}
-%	\subcaptionbox{向下双方状态\label{fig2:yiduiyi11-14:b}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi12.jpg}}
-%	\newline
-%	\centering
-%	\subcaptionbox{向左双方状态\label{fig2:yiduiyi11-14:c}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi13.jpg}}
-%	\hspace{0.5em}
-%	\subcaptionbox{向右双方状态\label{fig2:yiduiyi11-14:d}}
-%	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiyiduiyi14.jpg}}
-%	\bicaption
-%	{一对一人机对弈状态分析}
-%	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
-%	\label{fig2:yiduiyi11-14}
-%\end{figure}
-%可见当蓝方向下时会把红方吃掉，对照模型搜索得到的概率，向下的概率最大，为0.755。
-%
-%从一对一结果分析可以看出训练后的模型已经能识别出在那种状态应该远离敌方，并在合适的位置进行攻击。
-
-
-
-\subsection{多对多实验结果}
-在多对多实验中，参数设置如下：
-\begin{table}
+\subsection{二对二实验结果及分析}
+本节将就二对二飞机作战训练曲线和训练模型的人机对弈结果进行分析，同时对比了加入人类先验规则的模型。在二对二实验中，参数设置如表\ref{erduiercanshu}。
+\begin{table}[htbp]
 	\centering
 	\caption{多对多实验参数信息}
 	\begin{tabular}{c|c}
 		\hline 
 		棋盘大小 & 10*10 \\ 
 		\hline 
-		自适应学习率参数$\lambda$ & 1.5 \\ 
+		学习率调整参数$\lambda$ & 1.5 \\ 
 		\hline 
 		温度探索参数$\tau$& 1.0 \\ 
 		\hline 
@@ -431,46 +348,57 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 		\hline 
 		贪心策略$\epsilon$ & 0.75 \\ 
 		\hline 
-		起始学习率 & 2e-3
+		起始学习率 & 2e-3\\
+		\hline 
+		噪声系数& $\varepsilon=0.25$\\
+		\hline
+		\label{erduiercanshu}
 	\end{tabular} 
 \end{table}
-奖励设置为当双方各走完200步没有分出胜负，各奖励0，当一方至少有一条小鱼被吃掉，获胜方奖励为1，失败方奖励为-1。为了加快收敛速度，人为定义规则，当双方距离小于7时，只能向相互靠近的方向移动，对比加入规则前后得到的交叉熵和损失函数曲线为：
-\begin{figure}[!bpt]
+
+红蓝两方的初始位置和速度信息如图\ref{fig:duoduiduo1-2:a}所示：红一初始位置为$(1,2)$，初速度为向上，红二初始位置为$(2,2)$，初速度为向上，蓝一初始位置为$(7,7)$,蓝二初始位置为$(8,7)$,初速度都为向下。飞机的朝向为飞机的速度方向。
+
+
+%\begin{figure}[htbp]
+%	\centering
+%	\includegraphics[width=7cm]{example/feijichushiweizhi.jpg}
+%	\bicaption[二对二初始位置示意图]
+%	{二对二初始位置示意图}
+%	{Schematic diagram of initial position between 4 agents}
+%	\label{erduierchushi}
+%\end{figure}
+
+奖励设置为当双方各走完200步没有分出胜负，判为平局，四架飞机各奖励0，当一方至少有一架飞机被击灭，获胜方两架飞机奖励为1，失败方两架飞机奖励为-1。为了加快收敛速度，人为定义规则，当双方距离小于7时，只能向相互靠近的方向移动，对比加入规则前后得到的交叉熵和损失函数曲线如图\ref{fig1:guize}。
+\begin{figure}[hbpt]
 	\centering
 	\subcaptionbox{规则对交叉熵的影响\label{fig1:guize:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduoentropy.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{规则对损失函数的影响\label{fig1:guize:b}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduoloss.jpg}}
-	\bicaption
+	\bicaption[是否引入先验规则效果对比]
 	{是否引入先验规则效果对比}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	{Comparison of whether introduce prior rule}
 	\label{fig1:guize}
 \end{figure}
-从\ref{fig1:guize:a}可以看出在训练初期加入规则之前交叉熵下降相对缓慢，加入规则之后在训练初期交叉熵下降较快，但是在后期交叉熵稳定在0.45左右，而不加规则的模型交叉熵还在持续下降。从\ref{fig1:guize:b}可以看出加入规则的模型损失函数相对容易学习，因为加入规则后人为干预了数据样本的多样性，所以网络更容易学习，但是同时失去了模型的泛化能力。利用加入规则的模型和没有加规则的模型分别在训练的前中后期进行50轮对弈。得到的对弈的结果如下：
-\begin{figure}[!hbtp]
+
+从\ref{fig1:guize:a}可以看出在训练初期加入规则之前交叉熵下降相对缓慢，加入规则之后在训练初期交叉熵下降较快，但是在后期交叉熵稳定在0.45左右，而不加规则的模型交叉熵还在持续下降。从\ref{fig1:guize:b}可以看出加入规则的模型损失函数相对容易学习，因为加入规则后人为干预了数据样本的多样性，所以网络更容易学习，但是同时失去了模型的泛化能力。
+
+利用从零开始学迭代1500次后的最优模型和人进行对弈，人机对战结果展示如图\ref{fig:duoduiduo1-2:b}。在这里人控制红方两架飞机，蓝方为训练AI的两架飞机，红方先行。红一可行动作为上，下，左，选择向上，到达位置$(1,4)$。计算红一和蓝一蓝二的位置信息，没有飞机被击落。轮到蓝一进行动作，蓝一可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如图\ref{fig:duoduiduo1-2:b}。
+\begin{figure}[htbp]
 	\centering
-	\includegraphics[width=10cm]{example/win.jpg}
-	\bicaption[这里将出现在插图索引]
-	{对弈统计结果}
-	{Neural network training pipeline}
-	\label{fig:win}
+	\subcaptionbox{\label{fig:duoduiduo1-2:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijichushiweizhi.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{\label{fig:duoduiduo1-2:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo2.jpg}}
+	\bicaption[二对二初始位置示意图]
+	{二对二初始位置示意图}
+	{Schematic diagram of initial position between 4 agents.}
+	\label{fig:duoduiduo1-2}
 \end{figure}
-
-
-人机对战结果展示如下：
-在这里人类控制的红色小鱼先向上走一步，到达位置$(1,4)$计算红色小鱼对蓝色鱼和深蓝色鱼的位置信息，都没有被吃掉。轮到模型控制的深蓝色鱼进行动作，蓝色小鱼可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如下:
-\begin{figure}[!htp]
-	\centering
-	\includegraphics[width=10cm]{example/feijiduoduiduo2.jpg}
-	\bicaption[这里将出现在插图索引]
-	{蓝方起始状态信息}
-	{Neural network training pipeline}
-	\label{duoduiduo2.png}
-\end{figure}
-模型在test过程用贪心策略，选择概率最大的动作向左走，然后人类控制粉色小鱼向右，通过搜索算法统计得到浅蓝色小鱼的策略如图:
-
-\begin{figure}[!htp]
+模型在测试过程用贪心策略，选择概率最大的动作向左走，然后人类控制红二向右，接下来的对弈过程如图\ref{fig:duoduiduo3-6}所示。
+\begin{figure}[htbp]
 	\centering
 	\subcaptionbox{\label{fig2:fig:duoduiduo3-6:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo3.jpg}}
@@ -484,29 +412,28 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	\hspace{0.5em}
 	\subcaptionbox{\label{fig:duoduiduo3-6:d}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo6.jpg}}
-	\bicaption
-	{多对多人机对弈过程图示}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\bicaption[二对二人机对弈过程图示]
+	{二对二人机对弈过程图示}
+	{Analysis of 0man-machine game status}
 	\label{fig:duoduiduo3-6}
 \end{figure}
 
-经过以上的对战到达状态如图\ref{fig:duoduiduo3-6:d},可以看出这时对于深蓝色小鱼的策略已经非常明确，模型以0.8375的概率让深蓝色小鱼向左移动。下面分析当深蓝色小鱼分别执行可行的左，下，右的情况。
-当小鱼向下移动时，和对方智能体相对状态如图\ref{fig:duoduiduo9.jpg}
+经过几回合的对战到达状态如图\ref{fig:duoduiduo3-6:d},可以看出这时对于蓝一的策略已经非常明确，模型以0.8375的概率向左移动。下面分析当蓝一分别执行可行的左，下，右的情况如图\ref{fig2:duoduiduo}。
 
 
-\begin{figure}[!hpbt]
+\begin{figure}[hpbt]
 	\centering
 	\subcaptionbox{向下状态\label{fig2:duoduiduo:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo7.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{向右状态\label{fig2:duoduiduo:b}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo8.jpg}}
-	\bicaption
+	\bicaption[多对多对弈状态分析]
 	{多对多对弈状态分析}
 	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
 	\label{fig2:duoduiduo}
 \end{figure}
-经过计算蓝色小鱼向下移动和向右移动后与对方两个智能体相对状态，可以看出当向下和向右移动并不会吃掉对方小鱼，而当执行按照\ref{fig:duoduiduo3-6:d}策略，选取最大概率的动作向左时状态如图\ref{fig3:duoduiduo}
+经过计算蓝色小鱼向下移动和向右移动后与对方两个智能体相对状态，可以看出当向下和向右移动并不会吃掉对方小鱼，而当执行按照\ref{fig:duoduiduo3-6:d}策略，选取最大概率的动作向左时状态如图\ref{fig3:duoduiduo}。
 \begin{figure}[!hpbt]
 	\centering
 	\subcaptionbox{向左状态\label{fig3:duoduiduo:a}}
@@ -518,6 +445,19 @@ ${\nabla _{{\theta _i}}}J({\theta _i}) = {E_{s \sim {p^u},{a_i} \sim {\pi _i}}}[
 	{多对多对弈状态分析}
 	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
 	\label{fig3:duoduiduo}
+\end{figure}
+
+
+
+
+利用加入规则的模型和没有加规则的模型分别在训练的前中后期进行50轮对弈。得到的对弈的结果如下：
+\begin{figure}[hbtp]
+	\centering
+	\includegraphics[width=10cm]{example/win.jpg}
+	\bicaption[这里将出现在插图索引]
+	{对弈统计结果}
+	{Neural network training pipeline}
+	\label{fig:win}
 \end{figure}
 可以看到最后粉色小鱼被吃掉，训练出来的模型具有一定的决策能力。在训练时需要合理平衡探索和利用的关系，在模型进行人机对抗时，采用贪婪策略选取概率最大的动作。利用从零开始学习模型的方案要比加入先验规则表现好，在模型前期可能会出现波动，但是在后期模型性能增长要比加入规则模型快。这也和由AlphaGo进化到AlphaZero得到的结果一致：在很多情况下利用人类专家数据学习的模型并不一定是最优的，让模型从白板开始训练，通过自我对弈进行能获得比人类认知更好的策略。
 \section{本章小结}
