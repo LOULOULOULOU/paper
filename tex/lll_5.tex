@@ -136,7 +136,7 @@ NashQ_t^i(s) = \mathop {\max }\limits_{{a^1} \in {A^1},{a^2} \in {A^2}} Q_t^1(s,
 \end{figure}
 
 
-接着蓝方取动作概率中的最大值进行动作，依次循环进行动作选择。人机对弈过程如\ref{fig2:yiduiyi3-6}。对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，分析其和红方的相对状态,如图\ref{fig2:yiduiyi7-10}
+接着蓝方取动作概率中的最大值进行动作，依次循环进行动作选择。人机对弈过程如\ref{fig2:yiduiyi3-6}。对于\ref{fig2:yiduiyi3-6:b}状态，假设蓝方分别执行四个动作，分析其和红方的相对状态,如图\ref{fig2:yiduiyi7-10}。
 
 \begin{figure}[htp]
 	\centering
@@ -269,7 +269,7 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 
 二对二强化学习博弈算法流程如算法\ref{duoduiduosuanfa}所示。在监测网络结构是否是最优的时候，保存当前最新模型和历史最优模型进行相互博弈，当获胜率大于一定阈值时，进行网络参数的更新，否则最优模型不变。
 \begin{algorithm}[htbp]
-	\caption{多对多强化学习博弈算法}% Ëã·¨±êÌâ
+	\caption{二对二强化学习博弈算法}% Ëã·¨±êÌâ
 	\label{duoduiduosuanfa}
 	\begin{algorithmic}[1]%Ò»ÐÐÒ»¸ö±êÐÐºÅ
 		\Require
@@ -348,9 +348,9 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 		\hline 
 		贪心策略$\epsilon$ & 0.75 \\ 
 		\hline 
-		起始学习率 & 2e-3\\
+		起始学习率$r$ & 2e-3\\
 		\hline 
-		噪声系数& $\varepsilon=0.25$\\
+		噪声系数$\varepsilon$ &0.25\\
 		\hline
 		\label{erduiercanshu}
 	\end{tabular} 
@@ -384,8 +384,9 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 
 从\ref{fig1:guize:a}可以看出在训练初期加入规则之前交叉熵下降相对缓慢，加入规则之后在训练初期交叉熵下降较快，但是在后期交叉熵稳定在0.45左右，而不加规则的模型交叉熵还在持续下降。从\ref{fig1:guize:b}可以看出加入规则的模型损失函数相对容易学习，因为加入规则后人为干预了数据样本的多样性，所以网络更容易学习，但是同时失去了模型的泛化能力。
 
-利用从零开始学迭代1500次后的最优模型和人进行对弈，人机对战结果展示如图\ref{fig:duoduiduo1-2:b}。在这里人控制红方两架飞机，蓝方为训练AI的两架飞机，红方先行。红一可行动作为上，下，左，选择向上，到达位置$(1,4)$。计算红一和蓝一蓝二的位置信息，没有飞机被击落。轮到蓝一进行动作，蓝一可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如图\ref{fig:duoduiduo1-2:b}。
-\begin{figure}[htbp]
+利用从零开始学迭代1500次后的最优模型和人进行对弈，人机对战结果展示如图\ref{fig:duoduiduo1-2:b}。在这里我方控制红方两架飞机，蓝方为训练AI的两架飞机，红方先行。红一可行动作为上，下，左，选择向上，到达位置$(1,4)$。计算红一和蓝一蓝二的位置信息，没有飞机被击落。轮到蓝一进行动作，蓝一可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如图\ref{fig:duoduiduo1-2:b}。
+
+\begin{figure}[!htbp]
 	\centering
 	\subcaptionbox{\label{fig:duoduiduo1-2:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijichushiweizhi.jpg}}
@@ -397,7 +398,9 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 	{Schematic diagram of initial position between 4 agents.}
 	\label{fig:duoduiduo1-2}
 \end{figure}
-模型在测试过程用贪心策略，选择概率最大的动作向左走，然后人类控制红二向右，接下来的对弈过程如图\ref{fig:duoduiduo3-6}所示。
+
+模型在测试过程用贪心策略，选择概率最大的动作向左走，然后我方控制红二向右，接下来的对弈过程如图\ref{fig:duoduiduo3-6}所示。经过几回合的对战到达状态如图\ref{fig:duoduiduo3-6:d},可以看出这时对于蓝一的策略已经非常明确，模型以0.8375的概率向左移动。
+
 \begin{figure}[htbp]
 	\centering
 	\subcaptionbox{\label{fig2:fig:duoduiduo3-6:a}}
@@ -414,11 +417,9 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo6.jpg}}
 	\bicaption[二对二人机对弈过程图示]
 	{二对二人机对弈过程图示}
-	{Analysis of 0man-machine game status}
+	{Diagram of man-machine game process}
 	\label{fig:duoduiduo3-6}
 \end{figure}
-
-经过几回合的对战到达状态如图\ref{fig:duoduiduo3-6:d},可以看出这时对于蓝一的策略已经非常明确，模型以0.8375的概率向左移动。下面分析当蓝一分别执行可行的左，下，右的情况如图\ref{fig2:duoduiduo}。
 
 
 \begin{figure}[hpbt]
@@ -428,38 +429,45 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 	\hspace{0.5em}
 	\subcaptionbox{向右状态\label{fig2:duoduiduo:b}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo8.jpg}}
-	\bicaption[多对多对弈状态分析]
-	{多对多对弈状态分析}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\bicaption[二对二对弈状态分析(1)]
+	{二对二对弈状态分析(1)}
+	{Game state analysis of four agents(1).}
 	\label{fig2:duoduiduo}
 \end{figure}
-经过计算蓝色小鱼向下移动和向右移动后与对方两个智能体相对状态，可以看出当向下和向右移动并不会吃掉对方小鱼，而当执行按照\ref{fig:duoduiduo3-6:d}策略，选取最大概率的动作向左时状态如图\ref{fig3:duoduiduo}。
-\begin{figure}[!hpbt]
+
+图\ref{fig2:duoduiduo}分析l 当蓝一分别执行向下和向右的动作时红蓝两方的状态关系。通过分别计算蓝一和红一红二智能体之间的状态信息，可以看出当向下和向右移动并不会击败敌机，而当执行按照\ref{fig:duoduiduo3-6:d}策略，选取最大概率的动作向左时状态如图\ref{fig3:duoduiduo}。此时蓝一到达了对红二的最佳攻击位置，击败红二，AI模型获胜。
+
+\begin{figure}[hpbt]
 	\centering
 	\subcaptionbox{向左状态\label{fig3:duoduiduo:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo9.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{最终结果\label{fig3:duoduiduo:b}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo10.jpg}}
-	\bicaption
-	{多对多对弈状态分析}
-	{Examples of response maps during occlusions and not.The first row shows the original and response maps with no occlusions while the second row shows the maps with occlusions. The first column are the shots of sequence bear front in Princeton dataset. The color response maps are in the second column while the depth’s are in the third.}
+	\bicaption[二对二对弈状态分析(2)]
+	{二对二对弈状态分析(2)}
+	{Game state analysis of four agents(2).}
 	\label{fig3:duoduiduo}
 \end{figure}
 
 
+同时为了验证从零开始通过模型自我博弈得到数据的有效性，利用加入先验规则的模型和从零开始学习的模型进行对比，两个模型训练的参数设置相同，让其分别在模型迭代训练的前中后期进行50轮对弈。得到的对弈的结果如图\ref{fig:win}。
 
-
-利用加入规则的模型和没有加规则的模型分别在训练的前中后期进行50轮对弈。得到的对弈的结果如下：
 \begin{figure}[hbtp]
 	\centering
 	\includegraphics[width=10cm]{example/win.jpg}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[对弈统计结果]
 	{对弈统计结果}
-	{Neural network training pipeline}
+	{Game statistics results}
 	\label{fig:win}
 \end{figure}
-可以看到最后粉色小鱼被吃掉，训练出来的模型具有一定的决策能力。在训练时需要合理平衡探索和利用的关系，在模型进行人机对抗时，采用贪婪策略选取概率最大的动作。利用从零开始学习模型的方案要比加入先验规则表现好，在模型前期可能会出现波动，但是在后期模型性能增长要比加入规则模型快。这也和由AlphaGo进化到AlphaZero得到的结果一致：在很多情况下利用人类专家数据学习的模型并不一定是最优的，让模型从白板开始训练，通过自我对弈进行能获得比人类认知更好的策略。
-\section{本章小结}
 
+可以看出在模型训练的初期，利用人类先验规则训练的模型由于收敛比较快，策略学习速度较快，具有很大的优势，在迭代到600到1200轮时，两个模型的胜负次数基本持平，而在训练后期无先验规则的模型具有更好的表现能力。
+
+本节分析了二对二实验过程，对比了加入规则和不加规则的交叉熵和损失函数的下降曲线，并分析了产生差异的原因，从结果上可以看到最后红一被击落，AI获胜，训练出来的模型具有一定的决策能力。在训练时需要合理平衡探索和利用的关系，在模型进行人机对抗时，采用贪婪策略选取概率最大的动作。利用从零开始学习模型的方案要比加入先验规则表现好，在模型前期可能会出现波动，但是在后期模型性能增长要比加入规则模型快。这也和由AlphaGo进化到AlphaZero得到的结果一致：在很多情况下利用人类专家数据学习的模型并不一定是最优的，让模型从白板开始训练，通过自我对弈进行能获得比人类认知更好的策略。
+
+\section{本章小结}
+本章主要针对飞机对战的问题进行了建模和分析。首先介绍了多智能体强化学习常用的算法，接着在第二部分介绍了一对一飞机对抗的强化学习算法实验，首先介绍了作战的背景，建模过程，包括状态空间的建立，动作的选择以及强化学习算法和搜索树的建立，接着对一对一作战的结果进行了展示和在不同状态下采取不同策略的态势分析。在第三部分由一对一对抗实验拓展到了二对二的实验，对于既有竞争又有合作的情况，首先介绍了常用的经典强化学习算法，接着进行了二对二实验的场景描述以及模型建立，并结合实际应用场景进行了算法描述，接着对二对二的实验进行了结果展示，首先对比了有无人类规则情况下的训练曲线图，并统计了两个模型之间博弈的结果。接着详细展示了人机对弈过程，以及各个状态下的态势分析和策略分析。
+
+在本章经过实验和结果分析可以看出利用深度强化学习做博弈模型的自主决策具有可行性同时也在实验中验证了在无先验规则的情况下模型训练结果会更优。
 

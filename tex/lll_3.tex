@@ -377,7 +377,7 @@ MSE=\frac{\sum \limits_{i=1}^m (y^{i}-\bar{y})^{2}}{m}
 
 本节数据集来自洛阳电子对抗基地。特征值的个数为10，输出响应变量为二维。另外，数据样本有72个，其中选择60个数据样本进行训练，选择12个样本进行测试。将改进算法应用于电子设备参数，验证了算法的稳定性。为了进行对照实验，也使用了VAEGAN和WGAN。对于编码器、解码器、生成器和判别器，所有对比模型都具有相同的架构。模型使用RMSProp优化算法进行训练，学习率为0.0003，批大小为24。表\ref{tab3}中列出了网络架构。
 
-\begin{table}[!hpb]
+\begin{table}[hpb]
 	\centering
 	\caption{网络结构参数}
 	\label{tab3}
@@ -394,7 +394,7 @@ MSE=\frac{\sum \limits_{i=1}^m (y^{i}-\bar{y})^{2}}{m}
 
 \begin{figure}[htpb]
 	\centering
-	\includegraphics[width=15cm]{example/3.eps}
+	\includegraphics[width=\hsize]{example/GANsuanfaduibi.eps}
 	\bicaption[这里将出现在插图索引]
 	{不同模型生成数据进行回归MSE曲线图}
 	{Mean squared error of different algorithms}
