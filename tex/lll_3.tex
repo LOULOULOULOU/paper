@@ -22,11 +22,47 @@
 \end{figure}
 
 在实际问题中，大量样本数据往往很难获得或获取成本较高，而通常情况下在深度学习领域模型又是依赖于大量样本进行学习的，因此对于小样本数据集要想更好的学习数据分布的规律，就需要进行数据增强，在图像领域，常用的数据扩充方法有图像的翻转，旋转，尺度尺度变换，随机抠取，色彩抖动等等，在机器学习领域，常用的方法有Fancy PCA\cite{Holdt2010Genome},监督式抠取，以及我们接下来主要研究的生成式对抗网络的生成方法。数据增强一方面通过增加更多的数据提供信息提高了模型的泛化能力，另一方面引入了更多的噪声数据，能提高模型的鲁棒性。如果数据的分布可以用过模型利用概率统计的方式表达出来，那么产生更多的符合该概率分布的数据就达到了数据增强的目的。本章节主要介绍了生成式对抗网络的基本原理及改进算法，并针对实验数据类型对网络模型引入了监督信息，提高了模型的有效性。
+\section{SMOTE生成样本算法}
+SMOTE算法是常用的生成样本算法，其基本思想是对小样本数据进行分析并根据少数类样本人工合成新样本添加到数据集中。smote算法的基本思想就是插值，假设样本是二维的，其生成新样本过程如图\ref{fig:smote}所示。
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=10cm]{example/smote.jpg}
+	\bicaption[这里将出现在插图索引中]
+	{GAN结构示意图}
+	{Framework of GAN}
+	\label{fig:smote}
+\end{figure}
+首先利用K近邻思想找到扩充样本的临近样本点，随机选取设训练集样本大小为$T$,SMOTE算法将把数据集扩充成$NT$个新样本，这里$N$是正整数。新样本根据式\ref{eq:smote}进行合成。
+\begin{equation}
+	\label{eq:smote}
+	{x_{i1}} = {x_i} + {\varepsilon _1}({x_{i(nn)}} - {x_i})
+\end{equation}
+其中，${x_{i(nn)}}$是样本$x_i$k近邻中任意选取的一个，$\varepsilon _1$是0到1之间的随机数，这里$x_{i1}$即为对第$i$条进行一次扩充后得到的新的样本。对于所有的T个样本进行$N$次扩充最后得到的扩充数据即为新样本集。
+SMOTE算法描述如\ref{al:smote}所示。
+\begin{algorithm}[htbp]
+	\caption{SMOTE算法}% Ëã·¨±êÌâ
+	\label{al:smote}
+	\begin{algorithmic}[1]%Ò»ÐÐÒ»¸ö±êÐÐºÅ
+		%\Require {The number of critic iterations per generator iteration $n_{critic}$,the batch size $m$, training iteration is $K$.}
+		%\Require ~~ \\
+		\Require
+		数据扩充倍数$N$
+		\For{$i=1$ to $T$}
+		\For{$times=1$ to $N$}
+		\State 对于样本$x_i$利用欧式距离找到其对应的$k$个近邻，记为${x_{i(near)}}$,$near\in\left\{ {1,...,k} \right\} $
+		\State
+		从$k$个近邻中随机选择一个样本${x_{i(nn)}}$,生成一个0到1之间的随机数$\varepsilon$,利用式\ref{eq:smote}生成一个新样本。
+		\EndFor
+		\State 对于第$i$个样本合成$N$个新样本:${x_{inew}},new \in 1,...,N$。
+		\EndFor
+	\end{algorithmic}
+\end{algorithm}
+SMOTE存在的问题是其只是简单进行数据的插值工作并没有从模型内部学习数据的分布，可能会生成一些并不能表示数据信息的无效样本。
 \section{GAN算法}
 \subsection{GAN基本框架}
-生成式对抗网络于2014年被蒙特利尔大学的Goodfellow Ian首次提出， 由于其出色的表现，引起了业界学者的广泛关注。当强化学习的任务是对样本进行增强时，是通过生成式对抗网络进行实现的。作为Actor-Critic框架下的一员，生成式对抗网络主要有两个部分组成：生成器(Generator)和判别器(Discriminater)。生成器是生成式模型，主要学习数据的联合概率分布，图\ref{fig:生成式模型分类树状图}示意了GAN两个组成部分之间的关系。
+生成式对抗网络于2014年被蒙特利尔大学的Goodfellow Ian首次提出， 由于其出色的表现，引起了业界学者的广泛关注。当强化学习的任务是对样本进行增强时，是通过生成式对抗网络进行实现的。作为Actor-Critic框架下的一员，生成式对抗网络主要有两个部分组成：生成器(Generator)和判别器(Discriminater)。生成器是生成式模型，主要学习数据的联合概率分布，图\ref{fig:GAN2}示意了GAN两个组成部分之间的关系。
 
-\begin{figure}[!htp]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=10cm]{example/GAN1.jpg}
 	\hspace{1cm}
@@ -34,7 +70,7 @@
 	\bicaption[这里将出现在插图索引中]
 	{GAN结构示意图}
 	{Framework of GAN}
-	\label{fig:GAN1}
+	\label{fig:GAN2}
 \end{figure}
 其输入的数据为任意形式的噪声，输出的数据为学习到的假样本，判别器相当于一个二分类模型，其输入的数据为原始真实数据和生成器生成的假数据，输出的是输入样本属于真实样本的概率，概率值越大，代表该样本是真实样本的概率越大。生成式利用零和博弈模型把生成式模型和判别式模型整合在了一个框架下。对应于强化学习，GAN里面的生成器相当于智能体，生成器生成的数据就是智能体进行的动作，判别器相当于环境反馈的奖励，当生成的数据越接近真实数据，奖励值越大，生成器会向着该方向更新参数，反之当生成的数据离真实样本分布越远，奖励越小，生成器参数向反方向更新。在这里面，生成器和判别器可以是任何框架下的模型，通常在应用中都使用深层神经网络进行生成器和判别器的构造。
 
@@ -354,10 +390,10 @@ MSE=\frac{\sum \limits_{i=1}^m (y^{i}-\bar{y})^{2}}{m}
 
 在这里 $y^{i}$ 是SVR预测的标签值，$\bar{y}$ 是原始数据的真实标签，测试数据集中有$m$样本，MSE值越小，误差越小，得到的生成样本越好。
 
-图\ref{figCCPP}为CCPP数据集在不同$\lambda$参数下面的性能表现。
-\begin{figure}[!htp]
+图\ref{figCCPP}为当生成样本数量都为10000条时，CCPP数据集在不同$\lambda$参数下面的性能表现。
+\begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\hsize]{example/CCPP.eps}
+	\includegraphics[width=\hsize]{example/CCPP.jpg}
 	\bicaption[这里将出现在插图索引]
 	{CCPP数据实验结果}
 	{Flowchart of WGAN with Supervised Signal}
