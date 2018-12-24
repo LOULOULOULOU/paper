@@ -7,38 +7,40 @@
 %%第三章
 %%==================================================
 \chapter{有监督信号的WGAN网络对数据的扩充}
-生成式对抗网络(Generative adversarial networks,GAN)\cite{Goodfellow2017NIPS}是深度强化学习应用在数据生成上的成功案例。近年来生成式对抗网络在很多领域有了良好的应用，如：图像合成，图像修补，图像着色，视频预测，文字图像生成，等等。但是生成式对抗网络在其他非图像类领域应用的场景有待发展，其次生成式对抗网络由于损失函数本身是极小极大化的过程，因此纯在训练不稳定，生成样本覆盖不均的缺点。本章将分别介绍原始生成式对抗网络及其发展，并针对特定数据和现有问题提出改进算法原理及方案。
+生成式对抗网络(Generative adversarial networks,GAN)\cite{Goodfellow2017NIPS}是深度强化学习应用在数据生成上的成功案例。近年来生成式对抗网络在很多领域有了良好的应用，如：图像合成，图像修补，图像着色，视频预测，文字图像生成，等等。但是生成式对抗网络在机器学习数值类数据的应用还有待发展，其次生成式对抗网络由于损失函数本身是极小极大化的过程，因此纯在训练不稳定，生成样本覆盖不均的缺点。本章将分别介绍原始生成式对抗网络及其发展，并针对特定数据和现有问题提出改进算法原理及方案。
 \section{引言}
 
-众所周知，机器学习模型可以根据其学习到的数据形式分为生成式模型(Genenrative Model)和判别式模型(Discriminative Model)。判别式模型是基于决策函数$Y = f(X) $ 或者条件概率分布$ P(Y|X)$进行建模的，判别模型关心的是对于给定的输入$X$ 应该预测出什么样的输出$Y$,输入的数据是原始特征信息，输出的是每条样本对应的标签值。生成式模型由数据学习联合概率分布$P(X,Y)$,然后求条件概率分布$P(Y|X)$作为预测模型，也就是$P(Y|X) = \frac{{P(X,Y)}}{{P(X)}}$,生成式模型可以同时产生样本的特征值及其对应的标签信息\cite{Generative or discriminative? getting the best of both worlds}。典型的判别模型包括：K近邻法\cite{Hartigan1979Algorithm}，感知机，决策树，逻辑斯谛回归模型，最大熵模型，支持向量机，提升方法，和条件随机场，等等。在这里我们研究的是小数据集样本的数据扩充，所以用到的是生成式模型，利用极大似然估计算法的深度生成式模型根据其表示或估计似然的方式不同，有很多分类方法\cite{bibid}如图\ref{fig:生成式模型分类树状图}所示。根据似然估计过程基于的函数类型可以将生成模型分为显示密度函数和隐式密度函数，基于显示密度函数的经典算法有PicelRNN\cite{Oord2016Pixel}和变分自编码器\cite{Kingma2013Auto}，基于隐式密度函数经典算法有马尔科夫链和生成式对抗网络等等。
+众所周知，机器学习模型可以根据其学习到的数据形式分为生成式模型(Genenrative Model)和判别式模型(Discriminative Model)。判别式模型是基于决策函数$Y = f(X) $ 或者条件概率分布$ P(Y|X)$进行建模的，判别模型关心的是对于给定的输入$X$ 应该预测出什么样的输出$Y$,输入的数据是原始特征信息，输出的是每条样本对应的标签值。生成式模型由数据学习联合概率分布$P(X,Y)$,然后求条件概率分布$P(Y|X)$作为预测模型，也就是$P(Y|X) = \frac{{P(X,Y)}}{{P(X)}}$,生成式模型可以同时产生样本的特征值及其对应的标签信息\cite{bernardo2007generative}。典型的判别模型包括：K近邻法\cite{Hartigan1979Algorithm}，感知机，决策树，逻辑斯谛回归模型，最大熵模型，支持向量机，提升方法，和条件随机场，等等。在这里我们研究的是小数据集样本的数据扩充，所以用到的是生成式模型，利用极大似然估计算法的深度生成式模型根据其表示或估计似然的方式不同，有很多分类方法如图\ref{fig:生成式模型分类树状图}所示。根据似然估计过程基于的函数类型可以将生成模型分为显示密度函数和隐式密度函数，基于显示密度函数的经典算法有PicelRNN\cite{Oord2016Pixel}和变分自编码器\cite{Kingma2013Auto}，基于隐式密度函数经典算法有马尔科夫链和生成式对抗网络等等。
 
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=15cm]{example/generate.png}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[生成式模型分类树状图]
 	{生成式模型分类树状图}
-	{Generated model classification tree graph}
+	{Generated model classification tree graph.}
 	\label{fig:生成式模型分类树状图}
 \end{figure}
 
-在实际问题中，大量样本数据往往很难获得或获取成本较高，而通常情况下在深度学习领域模型又是依赖于大量样本进行学习的，因此对于小样本数据集要想更好的学习数据分布的规律，就需要进行数据增强，在图像领域，常用的数据扩充方法有图像的翻转，旋转，尺度尺度变换，随机抠取，色彩抖动等等，在机器学习领域，常用的方法有Fancy PCA\cite{Holdt2010Genome},监督式抠取，以及我们接下来主要研究的生成式对抗网络的生成方法。数据增强一方面通过增加更多的数据提供信息提高了模型的泛化能力，另一方面引入了更多的噪声数据，能提高模型的鲁棒性。如果数据的分布可以用过模型利用概率统计的方式表达出来，那么产生更多的符合该概率分布的数据就达到了数据增强的目的。本章节主要介绍了生成式对抗网络的基本原理及改进算法，并针对实验数据类型对网络模型引入了监督信息，提高了模型的有效性。
+在实际问题中，大量样本数据往往很难获得或获取成本较高，而通常情况下在深度学习领域模型又是依赖于大量样本进行学习的，因此对于小样本数据集要想更好的学习数据分布的规律，就需要进行数据增强，在图像领域，常用的数据扩充方法有图像的翻转，旋转，尺度尺度变换，随机抠取，色彩抖动等等，在机器学习领域，常用的方法有Fancy PCA\cite{Holdt2010Genome},监督式抠取,SMOTE算法等等，以及我们接下来主要研究的生成式对抗网络的生成方法。数据增强一方面通过增加更多的数据提供信息提高了模型的泛化能力，另一方面引入了更多的噪声数据，能提高模型的鲁棒性。如果数据的分布可以用过模型利用概率统计的方式表达出来，那么产生更多的符合该概率密度分布的数据就达到了数据增强的目的。本章节主要介绍了生成式对抗网络的基本原理及改进算法，并针对实验数据类型对网络模型引入了监督信息，提高了模型的有效性。
 \section{SMOTE生成样本算法}
-SMOTE算法是常用的生成样本算法，其基本思想是对小样本数据进行分析并根据少数类样本人工合成新样本添加到数据集中。smote算法的基本思想就是插值，假设样本是二维的，其生成新样本过程如图\ref{fig:smote}所示。
+SMOTE算法基本思想是对小样本数据进行分析并根据少数类样本人工合成新样本添加到数据集中。SMOTE算法的基本思想就是插值，假设样本是二维的，其生成新样本过程如图\ref{fig:smote}所示。
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=10cm]{example/smote.jpg}
-	\bicaption[这里将出现在插图索引中]
-	{GAN结构示意图}
-	{Framework of GAN}
+	\includegraphics[width=8cm]{example/smote.jpg}
+	\bicaption[SMOTE生成样本过程示意图]
+	{SMOTE生成样本过程示意图}
+	{Diagram of generating a sample by SMOTE.}
 	\label{fig:smote}
 \end{figure}
+
 首先利用K近邻思想找到扩充样本的临近样本点，随机选取设训练集样本大小为$T$,SMOTE算法将把数据集扩充成$NT$个新样本，这里$N$是正整数。新样本根据式\ref{eq:smote}进行合成。
 \begin{equation}
 	\label{eq:smote}
 	{x_{i1}} = {x_i} + {\varepsilon _1}({x_{i(nn)}} - {x_i})
 \end{equation}
 其中，${x_{i(nn)}}$是样本$x_i$k近邻中任意选取的一个，$\varepsilon _1$是0到1之间的随机数，这里$x_{i1}$即为对第$i$条进行一次扩充后得到的新的样本。对于所有的T个样本进行$N$次扩充最后得到的扩充数据即为新样本集。
-SMOTE算法描述如\ref{al:smote}所示。
+SMOTE算法描述如算法\ref{al:smote}所示。
+
 \begin{algorithm}[htbp]
 	\caption{SMOTE算法}% Ëã·¨±êÌâ
 	\label{al:smote}
@@ -57,16 +59,15 @@ SMOTE算法描述如\ref{al:smote}所示。
 		\EndFor
 	\end{algorithmic}
 \end{algorithm}
-SMOTE存在的问题是其只是简单进行数据的插值工作并没有从模型内部学习数据的分布，可能会生成一些并不能表示数据信息的无效样本。
+SMOTE存在的问题是其只是简单进行数据的插值工作并没有从模型内部学习数据的分布，可能会生成一些并不能表示数据信息的无效样本。一方面是增加了类之间重叠的可能性，另一方面是生成一些没有提供有益信息的样本
+
 \section{GAN算法}
 \subsection{GAN基本框架}
 生成式对抗网络于2014年被蒙特利尔大学的Goodfellow Ian首次提出， 由于其出色的表现，引起了业界学者的广泛关注。当强化学习的任务是对样本进行增强时，是通过生成式对抗网络进行实现的。作为Actor-Critic框架下的一员，生成式对抗网络主要有两个部分组成：生成器(Generator)和判别器(Discriminater)。生成器是生成式模型，主要学习数据的联合概率分布，图\ref{fig:GAN2}示意了GAN两个组成部分之间的关系。
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=10cm]{example/GAN1.jpg}
-	\hspace{1cm}
-	\includegraphics[width=10cm]{example/GAN2.jpg}
+	\includegraphics[width=\hsize]{example/GANframwork.jpg}
 	\bicaption[这里将出现在插图索引中]
 	{GAN结构示意图}
 	{Framework of GAN}
@@ -227,7 +228,7 @@ L=&\mathop{E}_{\tilde{x} \sim P_{G}}[D( \tilde{x})]- \mathop{E}_{x \sim P_{data}
 \subsection{变分GAN}
 VAEGAN将在GAN鉴别器中学习到的特征表示作为VAE的基础。其结合方式如图\ref{figVAEGAN}所示。
 
-\begin{figure}[!htp]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\hsize]{example/VAEGAN.png}
 	\bicaption[这里将出现在插图索引]
@@ -316,12 +317,12 @@ T_{D} = D(X)-D(G(E(X)))-D(G(Z))
 	\end{algorithmic}
 \end{algorithm}
 \section{模型性能分析}
-在本节将就改进模型的有效性和在标准数据集下不同参数中的表现进行分析，确定合理的参数方案。
-\subsection{模型有效性分析}
+在本节将对比改进模型和其他GAN网络在高斯分布下表现以及传统数据合成方案和GAN网络在标准数据集下的表现进行模型有效性分析。
+\subsection{不同GAN网络算法结果对比分析}
 由于数据的分布很难直观的观察到，为了可视化数据，首先生成一维概率密度分布已知的数据，从中采样得到相应的真实样本数据，把这些真实样本数据作为GAN网络的输入数据，然后绘制输出学习到的数据分布。观察生成数据和原始真实数据的吻合程度。
 
 首先假设原始数据分布为两个高斯分布的叠加，第一个高斯分布为$\mu=4,\sigma=0.5$，第二个高斯分布为$\mu=0,\sigma=0.3$。原始数据分布形式如下：
-\begin{figure}[!htp]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\hsize]{example/yuanshi.png}
 	\bicaption[这里将出现在插图索引]
@@ -329,43 +330,43 @@ T_{D} = D(X)-D(G(E(X)))-D(G(Z))
 	{Flowchart of WGAN with Supervised Signal}
 	\label{figyuanshi}
 \end{figure}
-对比WGAN，VAEGAN和改进的GAN算法，使用相同的网络结构，扩充数据量都为10000条，绘制扩充后的数据和原始数据的概率密度对比图如下：
+对比WGAN，VAEGAN和改进的GAN算法，使用相同的网络结构，扩充数据量都为10000条，绘制扩充后的数据和原始数据的概率密度对比图如图\ref{figig:al1}。
 
-\begin{figure}[!htp]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=10cm]{example/tu1.png}/
 	\hspace{2cm}
 	\includegraphics[width=10cm]{example/loss1.png}
-	\bicaption[这里将出现在插图索引中]
+	\bicaption[WGAN 实验效果图]
 	{WGAN 实验效果图}
-	{Framework of GAN}
+	{Results of WGAN}
 	\label{fig:al1}
 \end{figure}
-\begin{figure}[!htp]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=10cm]{example/tu2.png}/
 	\hspace{2cm}
 	\includegraphics[width=10cm]{example/loss2.png}
-	\bicaption[这里将出现在插图索引中]
+	\bicaption[VAEGAN实验效果图]
 	{VAEGAN实验效果图}
-	{Framework of GAN}
+	{Result of VAEGAN}
 	\label{fig:al2}
 \end{figure}
-\begin{figure}[!htp]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=10cm]{example/tu3.png}/
 	\hspace{2cm}
 	\includegraphics[width=10cm]{example/loss3.png}
-	\bicaption[这里将出现在插图索引中]
+	\bicaption[改进WGAN实验效果图]
 	{改进WGAN实验效果图}
-	{Framework of GAN}
+	{Result of improved WGAN.}
 	\label{fig:al3}
 \end{figure}
 可以看出，对于GAN算法，生成的数据只能学习到单高斯峰，而且生成的数据并不能准确描述$\mu=0,\sigma=0.3$的分布。判别器判别曲线还可能够判别出真假数据。从损失函数曲线上分析，两个网络始终没有达到相对稳定的状态。对于WGAN算法，仍然不能很好描述所有数据分布，但是由于引入了Wasserstein距离，损失函数曲线相比于GAN更加稳定，生成数据能相对准确的描述其中一个高斯分布，对于改进的WGAN算法，生成器已经能学到两个高斯分布，并且效果比前两种算法有所改善。对于损失函数生成器的损失函数大体呈下降趋势。通过对一维数据进行可视化，可以看出改进的算法在一定程度上改善了学习数据分布不全面，损失函数下降困难的问题。
-\subsection{参数分析}
-本节将结合标准数据集中联合循环发电厂(Combined Cycle Power Plant, CCPP)数据集讨论不同$\lambda$参数对实验结果带来的影响。该数据集包含了一个联合循环电厂在6年(2006-2011)的全负荷运行中收集到的9568个数据点。特征包括小时平均环境变量温度(T)、环境压力(AP)、相对湿度(RH)和排气真空(V)，用于预测工厂的净小时电能输出(EP)。
+\subsection{模型在标准集下的表现}
+本节将结合标准数据集中联合循环发电厂(Combined Cycle Power Plant, CCPP)数据集讨论不同算法下回归数据的结果。该数据集包含了一个联合循环电厂在6年(2006-2011)的全负荷运行中收集到的9568个数据点。特征包括小时平均环境变量温度(T)、环境压力(AP)、相对湿度(RH)和排气真空(V)，用于预测工厂的净小时电能输出(EP)。
 数据集的描述如下：
-\begin{table}[!hpb]
+\begin{table}[htpb]
 	\centering
 	\caption{CCPP数据集描述}
 	\label{tabccpp}
@@ -390,17 +391,30 @@ MSE=\frac{\sum \limits_{i=1}^m (y^{i}-\bar{y})^{2}}{m}
 
 在这里 $y^{i}$ 是SVR预测的标签值，$\bar{y}$ 是原始数据的真实标签，测试数据集中有$m$样本，MSE值越小，误差越小，得到的生成样本越好。
 
-图\ref{figCCPP}为当生成样本数量都为10000条时，CCPP数据集在不同$\lambda$参数下面的性能表现。
+图\ref{figCCPP}为当生成样本数量都为10000条时，CCPP数据集在不同GAN模型下随着迭代进行回归的结果。
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\hsize]{example/CCPP.jpg}
-	\bicaption[这里将出现在插图索引]
+	\includegraphics[width=\hsize]{example/WGANCCPP.eps}
+	\bicaption[CCPP数据实验结果]
 	{CCPP数据实验结果}
-	{Flowchart of WGAN with Supervised Signal}
+	{Results of CCPP dataset.}
 	\label{figCCPP}
 \end{figure}
 
-可以看出，当$\lambda=10$时，改进的模型AE解码作用占比重相对较大，整个算法回归效果在前期并不理想，后期也存在严重的抖动问题。当$\lambda=0.1$，AE模型占比相对较小，无法知道GAN生成数据的方向，前期生成网络随机生成大量假样本，干扰了数据的质量，$\lambda=1$相对合理的平衡了生成模型和AE模型的权重，在网络的初始阶段曲线相对稳定，生成数据的质量相对较高，到后期随着迭代次数增加，MSE呈缓慢下降趋势。可以看出在迭代次数80000次后，曲线呈上升趋势，分析这是由于深度学习网络过拟合造成的，解决方案就是采用监控损失函数曲线，当发现loss呈上升趋势进行早停处理。
+对于WGAN算法回归效果在前期并不理想，后期也存在的抖动问题。分析原因是模型的难收敛性造成的，VAREGAN算法在前期MSE值比较高，因为前期模型并没有得到有效的生成数据，给整个数据分布带来了大量的噪声，导致前期的MSE值要高于没有使用数据增强得到的MSE。在训练后期迭代次数到达12000时，MSE开始低于基准值，最后缓慢下降至一个稳定的值，改进的加入监督信号的WGAN算法在前期由于加入了自编码器的限制，模型收敛相对较快，在迭代次数大约8000次时MSE已经小于基准值。最后整体回归的表现也好好于其他模型。可以看出在迭代次数80000次后，曲线呈上升趋势，分析这是由于深度学习网络过拟合造成的，解决方案就是采用监控损失函数曲线，当发现loss呈上升趋势进行早停处理。
+
+最后所有的GAN网络取相同的迭代次数4000次，和Bootstrap算法，SMOTE算法，以及没有做数据扩充前的数据进行对比，得到的回归MSE值如图\ref{fig:MSE}所示。
+
+\begin{figure}[htpb]
+	\centering
+	\includegraphics[width=\hsize]{example/shujujisuanfaduibi.jpg}
+	\bicaption[不同模型生成数据进行回归MSE曲线图]
+	{不同模型生成数据进行回归RMSE曲线图}
+	{RMS of different methods.}
+	\label{fig:MSE}
+\end{figure}
+
+可以看出，Bootstrap算法只是用抽样的方法复制数据的个数，本质上没有引入额外的数据信息，SMOTE算法利用数据插值方法一定程度上扩充了数据，但是对最后结果的提升有限，WGAN算法对于
 
 
 \section{实验结果及分析}
@@ -430,14 +444,14 @@ MSE=\frac{\sum \limits_{i=1}^m (y^{i}-\bar{y})^{2}}{m}
 
 \begin{figure}[htpb]
 	\centering
-	\includegraphics[width=\hsize]{example/GANsuanfaduibi.eps}
+	\includegraphics[width=\hsize]{example/3.eps}
 	\bicaption[这里将出现在插图索引]
 	{不同模型生成数据进行回归MSE曲线图}
 	{Mean squared error of different algorithms}
 	\label{fig3}
 \end{figure}
 
-如图~\ref{fig3}所示，改进算法与VAEGAN和WGAN相比收敛速度更快，回归效果更好，反映了改进算法生成的样本更接近原始数据分布。在30000次迭代中，改进算法达到了稳定。由于有监督信号具有固定的先验分布，改进算法在训练初期的MSE明显低于其他算法。
+如图~\ref{fig3}所示，上采样算法即利用SMOTE算法对数据扩充后得到的MSE值，改进算法与VAEGAN和WGAN相比收敛速度更快，回归效果更好，反映了改进算法生成的样本更接近原始数据分布。在30000次迭代中，改进算法达到了稳定。由于有监督信号具有固定的先验分布，改进算法在训练初期的MSE明显低于其他算法。
 
 \subsection{对于股票数据的回归}
 
@@ -479,18 +493,20 @@ RDP_{d} = \frac{\bar{p(j+d)}-\bar{p(j)}}{\bar{p(j)}}*100
 
 其中 $p(j)$ 是在时间点 $j$的价格。本文选择延迟时间$d=5$，输入向量维度$m=5$。分割前$80\% $的数据是训练数据，后$20\% $的数据是测试数据。分别利用VAEGAN、WGAN和我们算法对转换后的数据进行实验。回归结果如表\ref{tab2}:
 
-\begin{table}[hpb]
+\begin{table}[htpb]
 	\centering
-	\caption{股票数据回归结果}
+	\bicaption[股票数据回归结果]
+	{股票数据回归结果}
+	{Results of stock data regression.}
 	\label{tab2}
-	\begin{tabular}{lllll} \toprule
-		股票名称 & GAN &  VAEGAN & WGAN &Ours  \\ 
+	\begin{tabular}{llllll} \toprule
+		股票名称 &SMOTE& GAN &  VAEGAN & WGAN &Ours  \\ 
 		\midrule
-		AORD&0.01184 & 0.00667 & 0.00764 &\textbf{0.00622}   \\
-		DJI &0.00816&0.00737&0.00769&\textbf{0.00643}  \\
-		HSI&0.01762&0.01585&0.01612&\textbf{0.01409}  \\
-		KS11&0.02655&0.02465&0.02621&\textbf{0.02413}\\
-		NK & 0.07398& 0.03836& 0.04298&\textbf{0.03445} \\
+		AORD& 0.01023&0.01184 & 0.00667 & 0.00764 &\textbf{0.00622}   \\
+		DJI &0.00912&0.00816&0.00737&0.00769&\textbf{0.00643}  \\
+		HSI&0.01834&0.01762&0.01585&0.01612&\textbf{0.01409}  \\
+		KS11&0.02765&0.02655&0.02465&0.02621&\textbf{0.02413}\\
+		NK &0.06534& 0.07398& 0.03836& 0.04298&\textbf{0.03445} \\
 		\bottomrule
 	\end{tabular}
 \end{table}
