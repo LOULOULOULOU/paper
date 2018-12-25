@@ -73,7 +73,7 @@ NashQ_t^i(s) = \mathop {\max }\limits_{{a^1} \in {A^1},{a^2} \in {A^2}} Q_t^1(s,
 \begin{figure}[!htp]
 	\centering
 	\includegraphics[width=7cm]{example/zhuijijiao.jpg}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[追击角和逃逸角示意图]
 	{追击角和逃逸角示意图}
 	{Neural network training pipeline}
 	\label{fig:zhuijijiao}
@@ -95,7 +95,7 @@ NashQ_t^i(s) = \mathop {\max }\limits_{{a^1} \in {A^1},{a^2} \in {A^2}} Q_t^1(s,
 
 \begin{table}[htbp]
 	\centering
-	\bicaption[指向一个表格的表目录索引]
+	\bicaption[一对一深度学习网络参数]
 	{一对一深度学习网络参数}
 	{ Deep learning network parameters }
 	\label{tab4}
@@ -335,7 +335,7 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 本节将就二对二飞机作战训练曲线和训练模型的人机对弈结果进行分析，同时对比了加入人类先验规则的模型。在二对二实验中，参数设置如表\ref{erduiercanshu}。
 \begin{table}[htbp]
 	\centering
-	\caption{多对多实验参数信息}
+	\caption{二对二实验参数信息}
 	\begin{tabular}{c|c}
 		\hline 
 		棋盘大小 & 10*10 \\ 
@@ -356,7 +356,7 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 	\end{tabular} 
 \end{table}
 
-红蓝两方的初始位置和速度信息如图\ref{fig:duoduiduo1-2:a}所示：红一初始位置为$(1,2)$，初速度为向上，红二初始位置为$(2,2)$，初速度为向上，蓝一初始位置为$(7,7)$,蓝二初始位置为$(8,7)$,初速度都为向下。飞机的朝向为飞机的速度方向。
+红蓝两方的初始位置和速度信息如图\ref{fig:duoduiduo1-2:a}所示，红一初始位置为$(1,2)$，初速度为向上，红二初始位置为$(2,2)$，初速度为向上，蓝一初始位置为$(7,7)$,蓝二初始位置为$(8,7)$,初速度都为向下。飞机的朝向为飞机的速度方向。
 
 
 %\begin{figure}[htbp]
@@ -378,7 +378,7 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/duoduiduoloss.jpg}}
 	\bicaption[是否引入先验规则效果对比]
 	{是否引入先验规则效果对比}
-	{Comparison of whether introduce prior rule}
+	{Comparison of whether introduce prior rule.}
 	\label{fig1:guize}
 \end{figure}
 
@@ -386,13 +386,13 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 
 利用从零开始学迭代1500次后的最优模型和人进行对弈，人机对战结果展示如图\ref{fig:duoduiduo1-2:b}。在这里我方控制红方两架飞机，蓝方为训练AI的两架飞机，红方先行。红一可行动作为上，下，左，选择向上，到达位置$(1,4)$。计算红一和蓝一蓝二的位置信息，没有飞机被击落。轮到蓝一进行动作，蓝一可行的位置为上，下和左，分别对应动作0,1,2。经过500次蒙特卡洛搜索树搜索得到各个位置的概率信息如图\ref{fig:duoduiduo1-2:b}。
 
-\begin{figure}[!htbp]
+\begin{figure}[htbp]
 	\centering
 	\subcaptionbox{\label{fig:duoduiduo1-2:a}}
 	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijichushiweizhi.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{\label{fig:duoduiduo1-2:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo2.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier2.jpg}}
 	\bicaption[二对二初始位置示意图]
 	{二对二初始位置示意图}
 	{Schematic diagram of initial position between 4 agents.}
@@ -404,23 +404,41 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 \begin{figure}[htbp]
 	\centering
 	\subcaptionbox{\label{fig2:fig:duoduiduo3-6:a}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo3.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier3.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{\label{fig:duoduiduo3-6:b}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo4.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier4.jpg}}
 	\newline
 	\centering
 	\subcaptionbox{\label{fig:duoduiduo3-6:c}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo5.jpg}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier5.jpg}}
 	\hspace{0.5em}
 	\subcaptionbox{\label{fig:duoduiduo3-6:d}}
-	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijiduoduiduo6.jpg}}
-	\bicaption[二对二人机对弈过程图示]
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier6.jpg}}
+	\bicaption[二对二人机对弈过程图示(1)]
 	{二对二人机对弈过程图示}
-	{Diagram of man-machine game process}
+	{Diagram of man-machine game process(1).}
 	\label{fig:duoduiduo3-6}
 \end{figure}
-
+\begin{figure}[htbp]
+	\centering
+	\subcaptionbox{\label{fig:duoduiduo9-10:a}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier7.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{\label{fig:duoduiduo9-10:b}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier8.jpg}}
+	\newline
+	\centering
+	\subcaptionbox{\label{fig2:fig:duoduiduo9-10:c}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier9.jpg}}
+	\hspace{0.5em}
+	\subcaptionbox{\label{fig:duoduiduo9-10:d}}
+	{\includegraphics[width=0.45\hsize,height=0.45\hsize]{example/feijierduier10.jpg}}
+	\bicaption[二对二人机对弈过程图示(2)]
+	{二对二人机对弈过程图示}
+	{Diagram of man-machine game process(2).}
+	\label{fig:duoduiduo9-10}
+\end{figure}
 
 \begin{figure}[hpbt]
 	\centering
@@ -450,6 +468,7 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 	\label{fig3:duoduiduo}
 \end{figure}
 
+从对弈过程分析，可以看出模型输出各个动作的概率具有一定的决策能力，图\ref{fig:duoduiduo3-6}和图\ref{fig:duoduiduo9-10}中红色字体为每次动作时奖励的分配，可以看出，越接近对战过程的结局，奖励越大，同时分析蓝1蓝2的关系，当蓝1到达\ref{fig:duoduiduo9-10:d}状态时，对于蓝1向右的奖励值最大为0.1124，同时蓝2奖励为0.1083，无论击灭地方飞机的是哪家飞机，团队成员所有智能体奖励都会相应增大，可见队内飞机已经具备一定的协作能力。
 
 同时为了验证从零开始通过模型自我博弈得到数据的有效性，利用加入先验规则的模型和从零开始学习的模型进行对比，两个模型训练的参数设置相同，让其分别在模型迭代训练的前中后期进行50轮对弈。得到的对弈的结果如图\ref{fig:win}。
 
@@ -467,7 +486,7 @@ L({\theta _i}) = {E_{x,a,r,x'}}[{({Q_i}^u(x,{a_1},...,{a_N}) - y)^2}]
 本节分析了二对二实验过程，对比了加入规则和不加规则的交叉熵和损失函数的下降曲线，并分析了产生差异的原因，从结果上可以看到最后红一被击落，AI获胜，训练出来的模型具有一定的决策能力。在训练时需要合理平衡探索和利用的关系，在模型进行人机对抗时，采用贪婪策略选取概率最大的动作。利用从零开始学习模型的方案要比加入先验规则表现好，在模型前期可能会出现波动，但是在后期模型性能增长要比加入规则模型快。这也和由AlphaGo进化到AlphaZero得到的结果一致：在很多情况下利用人类专家数据学习的模型并不一定是最优的，让模型从白板开始训练，通过自我对弈进行能获得比人类认知更好的策略。
 
 \section{本章小结}
-本章主要针对飞机对战的问题进行了建模和分析。首先介绍了多智能体强化学习常用的算法，接着在第二部分介绍了一对一飞机对抗的强化学习算法实验，首先介绍了作战的背景，建模过程，包括状态空间的建立，动作的选择以及强化学习算法和搜索树的建立，接着对一对一作战的结果进行了展示和在不同状态下采取不同策略的态势分析。在第三部分由一对一对抗实验拓展到了二对二的实验，对于既有竞争又有合作的情况，首先介绍了常用的经典强化学习算法，接着进行了二对二实验的场景描述以及模型建立，并结合实际应用场景进行了算法描述，接着对二对二的实验进行了结果展示，首先对比了有无人类规则情况下的训练曲线图，并统计了两个模型之间博弈的结果。接着详细展示了人机对弈过程，以及各个状态下的态势分析和策略分析。
+本章主要针对飞机对战的问题进行了建模和分析。首先介绍了多智能体强化学习常用的算法，接着在第二部分介绍了一对一飞机对抗的强化学习算法实验，首先介绍了作战的背景，建模过程，包括状态空间的建立，动作的选择以及强化学习算法和搜索树的建立，接着对一对一作战的结果进行了展示和在不同状态下采取不同策略的态势分析。在第三部分由一对一对抗实验拓展到了二对二的实验，对于既有竞争又有合作的情况，首先介绍了常用的经典强化学习算法，接着进行了二对二实验的场景描述以及模型建立，并结合实际应用场景进行了算法描述，接着对二对二的实验进行了结果展示，首先对比了有无人类规则情况下的训练曲线图，并统计了两个模型之间博弈的结果。接着详细展示了人机对弈过程，以及各个状态下的策略分析以及奖励分配。
 
 在本章经过实验和结果分析可以看出利用深度强化学习做博弈模型的自主决策具有可行性同时也在实验中验证了在无先验规则的情况下模型训练结果会更优。
 

@@ -33,9 +33,9 @@
 \begin{figure}[!htpb]
 	\centering
 	\includegraphics[width=10cm]{example/reinforcement_learning_pro.png}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[强化学习交互过程]
 	{强化学习交互过程}
-	{The history of Artificial Intelligence.}
+	{Interaction process of reinforcement learning.}
 	\label{fig:1}
 \end{figure}
 \subsection{有限马尔科夫决策过程}
@@ -165,9 +165,9 @@ R_{ss'}^a = E[{r_{t{\rm{ + }}1}}{\rm{|}}{{\rm{S}}_t} = s,{S_{t + 1}} = s',{a_t} 
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=15cm]{example/MC.png}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[蒙特卡洛值函数更新方式示意图]
 	{蒙特卡洛值函数更新方式示意图}
-	{The history of Artificial Intelligence.}
+	{Monte carlo value function update mode diagram.}
 	\label{fig:5}
 \end{figure}
 MC的更新方式如下：
@@ -211,9 +211,9 @@ TD算法是单步更新制，只需要等下一时刻状态的到来即可利用
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=15cm]{example/TD.png}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[单步差分值函数更新方式示意图]
 	{单步差分值函数更新方式示意图}
-	{The history of Artificial Intelligence.}
+	{Schematic diagram of update mode of single-step difference value function.}
 	\label{fig:6}
 \end{figure}
 TD的更新方式如下：
@@ -266,9 +266,9 @@ V({S_t}) \leftarrow V({S_t}) + \alpha [{R_{t + 1}} + \gamma V({S_{t + 1}}) - V({
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=15cm]{example/MC_and_TD.png}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[MC和TD误差随迭代次数变化曲线]
 	{MC和TD误差随迭代次数变化曲线}
-	{The history of Artificial Intelligence.}
+	{MC and TD errors vary with the number of iterations.}
 	\label{fig:4}
 \end{figure}
 \subsection{基于策略梯度的算法}
@@ -311,9 +311,9 @@ J(\theta ){\rm{ = }}{{\rm{E}}_\pi }[r] = \sum\limits_{s \in {\rm{S}}} {d(s)\sum\
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=15cm]{example/Q_table.jpg}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[Q值表示意图]
 	{Q值表示意图}
-	{The history of Artificial Intelligence.}
+	{The Q table.}
 	\label{fig:8}
 \end{figure}
 从上一节介绍可知，随着环境复杂度和动作可选范围增加，状态空间和动作空间的笛卡尔积尺寸变大，需要优化的状态动作值函数计算复杂度呈指数级数增长。对于高维的环境特征信息，如在图像视频领域，Q-learning算法不再适用，将深度学习网络应用在Q-learning框架下作为价值函数的逼近器代替传统的Q表想法应运而生，这种算法就是深度Q价值网络(Deep Q-learning,DQN)。DQN算法可以直接从原始输入状态中学习环境特征，返回值函数。DQN认为真实的Q值函数近似等于深度学习网络输出的值：
@@ -385,9 +385,9 @@ J(\theta ) = {E_\pi }[\log \pi (a|s;\theta ){A_\pi }(s,a)]
 \begin{figure}[htpb]
 	\centering
 	\includegraphics[width=15cm]{example/ac.png}
-	\bicaption[这里将出现在插图索引]
+	\bicaption[Actor-Critic策略梯度算法更新过程]
 	{Actor-Critic策略梯度算法更新过程}
-	{The history of Artificial Intelligence.}
+	{Actor-critic policy gradient algorithm update process.}
 	\label{fig:ac}
 \end{figure}
 如图\ref{fig:ac}所示，Actor-Critic模型由两个部分组成：Actor基于动作概率选择下一步的动作，Critic根据当前的状态和Actor选择的动作获得的数据进行采样，逼近值函数进行打分，在下一次迭代中，Actor又会根据Critic打分值沿着最大化收益的方向改变动作概率输出。相对于传统的值函数更新，AC模型引入了策略梯度进行智能体策略的监督，使得训练更加稳定，同时AC模型利用TD方法进行优化函数的更新，弥补了蒙特卡洛策略梯度回合制更新方差大训练时间长的不足。AC模型的算法过程如下：
