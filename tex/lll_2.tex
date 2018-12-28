@@ -377,15 +377,14 @@ J(\theta ) = {E_\pi }[\log \pi (a|s;\theta ){A_\pi }(s,a)]
 
 \begin{figure}[htpb]
 	\centering
-	\includegraphics[width=15cm]{example/ac.png}
+	\includegraphics[width=\hsize]{example/ac.jpg}
 	\bicaption[Actor-Critic策略梯度算法更新过程]
 	{Actor-Critic策略梯度算法更新过程}
 	{Actor-critic policy gradient algorithm update process.}
 	\label{fig:ac}
 \end{figure}
 如图\ref{fig:ac}所示，Actor-Critic模型由两个部分组成：Actor基于动作概率选择下一步的动作，Critic根据当前的状态和Actor选择的动作获得的数据进行采样，逼近值函数进行打分，在下一次迭代中，Actor又会根据Critic打分值沿着最大化收益的方向改变动作概率输出。相对于传统的值函数更新，AC模型引入了策略梯度进行智能体策略的监督，使得训练更加稳定，同时AC模型利用TD方法进行优化函数的更新，弥补了蒙特卡洛策略梯度回合制更新方差大训练时间长的不足。AC模型的算法过程如算法\ref{algo:DQN}。
-
-\begin{algorithm}
+\begin{algorithm}[htbp]
 	% \begin{algorithm}[H] % 强制定位
 	\caption{Actor-Critic策略梯度算法}
 	\label{algo:DQN}
